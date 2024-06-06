@@ -12,11 +12,12 @@ Description
 	website : "https://jasp-stats.org"
 	license : "GPL (>= 2)"
 	icon : "impMice.svg"
-	hasWrappers: false
+    // hasWrappers: false
 
 	GroupTitle
 	{
     title:	qsTr("Missingness")
+    icon: 	"impPattern.svg"
 	}
 	Analysis
 	{
@@ -28,19 +29,29 @@ Description
     {
     menu:	qsTr("Test")
         title:	qsTr("Test")
-        func:	"Test"
+        func:	"MissingnessInspection2"
     }
     Analysis
     {
-    menu:	qsTr("Correlation")
-        title:	qsTr("Correlation")
-        func:	"Correlation"
+    menu:	qsTr("Test2")
+        title:	qsTr("Test2")
+        qml:    "MissingnessInspection3.qml"
+        func:	"MissingnessInspection3"
     }
+    Analysis
+    {
+        title: 	qsTr("Flexplot")
+        qml:   	"Flexplot.qml"
+        func:	"flexplot"
+        hasWrapper: true
+    }
+
   Separator {}
 
   GroupTitle
 	{
     title:	qsTr("Imputation")
+    icon: 	"impImpute.svg"
 	}
 	Analysis
 	{
