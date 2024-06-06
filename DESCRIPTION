@@ -14,13 +14,11 @@ Imports:
   jaspGraphs,
   ggmice,
   ggplot2,
-  ggrepel,
-  forecast,
-  flexplot,
-  ggrain,
-  ggpp,
-  ggtext,
-  dplyr
+  dplyr,
+  mice,
+  magrittr,
+  purrr,
+  flexplot
 Suggests:
   testthat
 Remotes:
