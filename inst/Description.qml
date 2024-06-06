@@ -12,7 +12,7 @@ Description
 	website : "https://jasp-stats.org"
 	license : "GPL (>= 2)"
 	icon : "impMice.svg"
-    // hasWrappers: false
+    hasWrappers: true
 
 	GroupTitle
 	{

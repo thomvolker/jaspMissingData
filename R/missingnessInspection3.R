@@ -30,21 +30,26 @@ missingnessInspection3 <- function(jaspResults, dataset, options) {
   }
 
   # Create plot
-  .missingDataPatternPlot(jaspResults, dataset, options)
+  .missingDataPatternPlot(jaspResults, dataset, options, ready)
 }
 
 # Function to create the missing data pattern plot
-.missingDataPatternPlot <- function(jaspResults, dataset, options) {
-  #Set up parameters
+.missingDataPatternPlot <- function(jaspResults, dataset, options, ready) {
+  # Set up the plot parameters
   missing_Plot <- createJaspPlot(title = "Missing Data Pattern", width = 600, height = 450)
   missing_Plot$dependOn(c("variables")) # GV: change if variables input change -
   # GV: other depends may be needed if the top-level function would govern
   # multiple inputs for missingness inspection
-  # GV: citation below omitted
-  #missing_Plot$addCitation("van Buuren, S., & Groothuis-Oudshoorn, K. (2011). mice: Multivariate Imputation by Chained Equations in R. Journal of Statistical Software, 45(3), 1-67.")
+  # GV: citation below omitted - ggmice citation more in order?
+  # missing_Plot$addCitation("van Buuren, S., & Groothuis-Oudshoorn, K. (2011). mice: Multivariate Imputation by Chained Equations in R. Journal of Statistical Software, 45(3), 1-67.")
 
-  # Pre-populate the jasp object
+  # setup the JASP object
   jaspResults[["missing_Plot"]] <- missing_Plot
+
+  # Check if the function is ready to run
+  if (!ready){
+    return()
+  }
 
   # Prepare the data for the missing data pattern plot
   if (is.null(options$variables) || length(options$variables) == 0) {
@@ -64,11 +69,12 @@ missingnessInspection3 <- function(jaspResults, dataset, options) {
   }
 
   # Create the missing data pattern plot
-  pattern <- mice::md.pattern(selected_data, plot = FALSE)
-  pattern_plot <- lattice::levelplot(t(pattern), xlab = "Variables", ylab = "Missingness Pattern", colorkey = TRUE)
+  # pattern <- mice::md.pattern(selected_data, plot = FALSE) # see 55-58
+  # pattern <- ggmice::plot_pattern(data = dataset, rotate = TRUE)
 
   # Add the plot to the JASP results
-  missing_Plot$plotObject <- pattern_plot
+  missing_Plot$plotObject <- mice::boys %>% ggplot(aes(x = age, y = hgt)) + geom_point()
 
+  # return the plot to the main function
   return()
 }

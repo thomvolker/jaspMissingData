@@ -20,6 +20,7 @@ import QtQuick
 import QtQuick.Layouts
 import JASP
 import JASP.Controls
+import JASP.Widgets
 
 // All Analysis forms must be built with the From QML item
 Form
