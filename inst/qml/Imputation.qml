@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2024 Utrecht University
+// Copyright (C) 2013-2021 University of Amsterdam
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -16,26 +16,36 @@
 // <http://www.gnu.org/licenses/>.
 //
 
-import QtQuick
-import QtQuick.Layouts
-import JASP
-import JASP.Controls
+import QtQuick			2.8
+import QtQuick.Layouts	1.3
+import JASP.Controls	1.0
+import JASP.Widgets		1.0
 
 // All Analysis forms must be built with the From QML item
 Form
 {
     columns: 1
 
-    Formula
-    {
-        rhs: "variables"
-    }
-
     VariablesForm
     {
-        AvailableVariablesList	{ name: "allVariablesList"								}
-        AssignedVariablesList	{ name: "variables";		title: qsTr("Variables")	}
-        AssignedVariablesList	{ name: "splitBy";			title: qsTr("Split");		singleVariable: true; suggestedColumns: ["ordinal", "nominal"];	id: splitBy }
+        AvailableVariablesList
+        {
+            name: "allVariablesList"
+        }
+
+        AssignedVariablesList
+        {
+            name: "variables"
+            title: qsTr("Variables")
+        }
+
+        AssignedVariablesList
+        {
+            name: "splitBy"
+            title: qsTr("Split")
+            singleVariable: true
+            suggestedColumns: ["ordinal", "nominal"]
+            id: splitBy }
     }
 
     Section
