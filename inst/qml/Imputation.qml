@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2013-2021 University of Amsterdam
+// Copyright (C) 2024 Utrecht University
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -16,99 +16,77 @@
 // <http://www.gnu.org/licenses/>.
 //
 
-import QtQuick			2.8
-import QtQuick.Layouts	1.3
-import JASP.Controls	1.0
-import JASP.Widgets		1.0
+import QtQuick
+import QtQuick.Layouts
+import JASP
+import JASP.Controls
 
 // All Analysis forms must be built with the From QML item
 Form
 {
-    columns: 1
 
-    VariablesForm
-    {
-        AvailableVariablesList
-        {
-            name: "allVariablesList"
-        }
+	VariablesForm
+	{
 
-        AssignedVariablesList
-        {
-            name: "variables"
-            title: qsTr("Variables")
-        }
+		AvailableVariablesList { name:	"allVariablesList" }
+		AssignedVariablesList
+		{
+			name: "variables"
+			title: qsTr("Variables")
+		}
 
-        AssignedVariablesList
-        {
-            name: "splitBy"
-            title: qsTr("Split")
-            singleVariable: true
-            suggestedColumns: ["ordinal", "nominal"]
-            id: splitBy }
-    }
+	}
 
-    Section
-    {
-        title: qsTr("Missingness Data Pattern")
-        columns: 1
+	Group
+	{
 
-        Group
-        {
-            Group
-            {
-                columns: 2
-                CheckBox {				name: "patternPlots";			label: qsTr("Pattern plots");	id:	patternPlots					}
-            }
-        }
-    }
+		title:	qsTr("Parameterization")
 
-    Section
-    {
-        title: qsTr("Influx / Outflux")
-        columns: 1
+		IntegerField
+		{
+			name:			"nImp"
+			defaultValue:	5
+			label:			qsTr("Number of Imputation")
+			min:			1
+		}
 
-        Group
-        {
-            Group
-            {
-                columns: 2
-                CheckBox {				name: "observedPlots";	label: qsTr("Observed data correlation plots");	id:	observedPlots			}
-                CheckBox {				name: "fluxPlots";			label: qsTr("Influx/Outflux plot");	id:	fluxPlots					}
-                CheckBox {				name: "missingPlots";	label: qsTr("Missing data correlation plots");	id:	missingPlots			}
+		IntegerField
+		{
+			name:			"nIter"
+			defaultValue:	10
+			label:			qsTr("Number of Iterations")
+			min:			1
+		}
 
-            }
-            Group
-            {
-                enabled: observedPlots.checked || missingPlots.checked
+		IntegerField
+		{
+			name:			"seed"
+			label:			qsTr("Random Number Seed")
+			defaultValue:	235711
+		}
+	}
 
-                indent:		true
-                CheckBox {	name: "distributionAndCorrelationPlotDensity";		label: qsTr("Display density")						}
-                CheckBox {	name: "distributionAndCorrelationPlotRugMarks";		label: qsTr("Display rug marks")					}
-                DropDown {
-                    name: "distributionAndCorrelationPlotHistogramBinWidthType"
-                    label: qsTr("Bin width type")
-                    indexDefaultValue: 0
-                    values:
-                        [
-                        {label: qsTr("Sturges"),				value: "sturges"},
-                        {label: qsTr("Scott"),					value: "scott"},
-                        {label: qsTr("Doane"),					value: "doane"},
-                        {label: qsTr("Freedman-Diaconis"),		value: "fd"	},
-                        {label: qsTr("Manual"),					value: "manual"	}
-                    ]
-                    id: binWidthType
-                }
-                DoubleField
-                {
-                    name:			"distributionAndCorrelationPlotHistogramManualNumberOfBins"
-                    label:			qsTr("Number of bins")
-                    defaultValue:	30
-                    min:			3;
-                    max:			10000;
-                    enabled:		binWidthType.currentValue === "manual"
-                }
-            }
-        }
-    }
+	Group
+	{
+
+		title:	qsTr("Convergence")
+
+		CheckBox
+		{
+			name:		"tracePlot"
+			label:		qsTr("Trace Plots")
+			id:			tracePlot
+			checked:	false
+		}
+
+		CheckBox
+		{
+			name:		"densityPlot"
+			label:		qsTr("Density Plots")
+			id:			densityPlot
+			checked:	false
+		}
+
+	}
+
 }

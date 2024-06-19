@@ -16,7 +16,7 @@
 #
 
 # Main function ----
-MissingnessInspection <- function(jaspResults, dataset, options) {
+MockAnalysis <- function(jaspResults, dataset, options) {
   # Set title
   jaspResults$title <- "Mock Analysis"
   # Init options: add variables to options to be used in the remainder of the analysis
@@ -65,7 +65,7 @@ MissingnessInspection <- function(jaspResults, dataset, options) {
 
   # Or like this, if you want to do sth with the errors
   errors <- .hasErrors(dataset, "run", message = "short",
-                       type = c('observations', 'variance', 'infinity'),
+    	                 type = c('observations', 'variance', 'infinity'),
                        all.target = options$variables,
                        observations.amount = '< 2')
   errors
@@ -92,10 +92,10 @@ MissingnessInspection <- function(jaspResults, dataset, options) {
 # Output functions ----
 .mockContainerMain <- function(jaspResults, options, mockResults) {
   if (!is.null(jaspResults[["mockMainContainer"]])) return()
-
+  
   mainContainer <- createJaspContainer("Model fit tables")
   mainContainer$dependOnOptions(c("variables", "someotheroption"))
-
+  
   jaspResults[["mockMainContainer"]] <- mainContainer
 }
 
@@ -124,21 +124,21 @@ MissingnessInspection <- function(jaspResults, dataset, options) {
 
 .mockTableSthElse <- function(jaspResults, options, mockResults) {
   if (!is.null(jaspResults[["mockMainContainer"]][["mockTable2"]])) return()
-
+  
   # Below is one way of creating a table
   mockTable2 <- createJaspTable(title = "Mock Table Something Else")
   mockTable2$dependOnOptions(c("variables", "someotheroption"))
-
+  
   # Bind table to jaspResults
   jaspResults[["mockMainContainer"]][["mockTable2"]] <- mockTable2
-
+  
   # Add column info
   mockTable2$addColumnInfo(name = "hallo", title = "Hallo", type = "string")
   mockTable2$addColumnInfo(name = "doei",  title = "Doei",  type = "string")
-
+  
   # Calculate some data from results
   mockSummary <- summary(mockResults$someObject)
-
+  
   # Add data per column. Calculations are allowed here too!
   mockTable2[["hallo"]] <- ifelse(mockSummary$hallo > 1, "Hallo!", "Hello!")
   mockTable2[["doei"]]  <- mockSummary$doei^2
@@ -149,7 +149,7 @@ MissingnessInspection <- function(jaspResults, dataset, options) {
 
   mockPlot <- createJaspPlot(title = "Mock Plot", height = 320, width = 480)
   mockPlot$dependOnOptions(c("variables", "someotheroption"))
-
+  
   # Bind plot to jaspResults
   jaspResults[["mockPlot"]] <- mockPlot
 

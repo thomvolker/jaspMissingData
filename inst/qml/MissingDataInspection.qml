@@ -24,36 +24,49 @@ import JASP.Controls
 // All Analysis forms must be built with the From QML item
 Form
 {
-    columns: 1
 
-    Formula
-    {
-        rhs: "variables"
-    }
+	VariablesForm
+	{
 
-    VariablesForm
-    {
-        AvailableVariablesList
-        {
-            name: "allVariablesList"
-        }
+		AvailableVariablesList { name:	"allVariablesList" }
+		AssignedVariablesList
+		{
+			name: "variables"
+			title: qsTr("Variables")
+		}
 
-        AssignedVariablesList
-        {
-            name: "variables"
-            title: qsTr("Variables")
-        }
-    }
+		AssignedVariablesList
+		{
+			name:			"groupVar"
+			title:			qsTr("Split Variable")
+			singleVariable:	true
+			allowedColumns:	"nominal"
+			id:				groupVar
+			toolTip:		qsTr("I'm ignoring this, for now. Sorry :(")
+		}
 
-    Group
-    {
-      Group
-       {
-                columns: 4
-                CheckBox {				name: "patternPlots";			label: qsTr("Pattern plots");	id:	patternPlots				}
-                CheckBox {				name: "fluxPlots";			label: qsTr("Influx/Outflux plot");	id:	fluxPlots					}
-                CheckBox {				name: "observedPlots";	label: qsTr("Observed data correlation plots");	id:	observedPlots		}
-                CheckBox {				name: "missingPlots";	label: qsTr("Missing data correlation plots");	id:	missingPlots		}
-        }
-    }
+	}
+
+	Group
+	{
+		title:	qsTr("Analyses")
+
+		CheckBox
+		{
+			name:		"patternPlot"
+			label:		qsTr("Response Pattern Plot")
+			id:			patternPlot
+			checked:	true
+		}
+
+		CheckBox
+		{
+			name:		"fluxTable"
+			label:		qsTr("In/Out-Flux Statistics")
+			id:			fluxTable
+			checked:	false
+		}
+
+	}
+
 }
