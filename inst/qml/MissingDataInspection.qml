@@ -67,6 +67,22 @@ Form
 			checked:	false
 		}
 
+        CheckBox
+        {
+            name:		"fluxPlot"
+            label:		qsTr("In/Out-Flux Plot")
+            id:			fluxPlot
+            checked:	false
+        }
+
+        CheckBox
+        {
+            name:		"corrPlot"
+            label:		qsTr("Correlation Plot")
+            id:			corrPlot
+            checked:	false
+        }
+
 	}
 
 }

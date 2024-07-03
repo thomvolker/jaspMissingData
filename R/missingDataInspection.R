@@ -35,13 +35,20 @@ MissingDataInspectionInternal <- function(jaspResults, dataset, options) {
     # Compute (a list of) results from which tables and plots can be created
     #localResults <- .computeResults(jaspResults, dataset, options)
 
+
+
+    if(options$patternPlot) # always active by default
+      .createPatternPlot(jaspResults, options, dataset)
+
     # Output containers, tables, and plots based on the results. These functions should not return anything!
     .createMainContainer(jaspResults, options)
 
     if(options$fluxTable)
       .createFluxTable(jaspResults, options, dataset)
-    if(options$patternPlot)
-      .createPatternPlot(jaspResults, options, dataset)
+    if(options$fluxPlot)
+      .createFluxPlot(jaspResults, options, dataset)
+    if(options$corrPlot)
+      .createCorrPlot(jaspResults, options, dataset)
   }
     return()
 }
@@ -60,8 +67,8 @@ MissingDataInspectionInternal <- function(jaspResults, dataset, options) {
 ###--------------------------------------------------------------------------------------------------------------------------###
 
 .errorHandling <- function(dataset, options)
-  .hasErrors(dataset, 
-             "run", 
+  .hasErrors(dataset,
+             "run",
              type = c('observations', 'variance', 'infinity'),
              all.target = options$variables,
              observations.amount = '< 2',
@@ -71,10 +78,10 @@ MissingDataInspectionInternal <- function(jaspResults, dataset, options) {
 
 .createMainContainer <- function(jaspResults, options) {
   if (!is.null(jaspResults[["mainContainer"]])) return()
-  
+
   mainContainer <- createJaspContainer("Missing Data Analysis")
   mainContainer$dependOn(options = c("variables", "groupVar"))
-  
+
   jaspResults[["mainContainer"]] <- mainContainer
 }
 
@@ -155,15 +162,41 @@ MissingDataInspectionInternal <- function(jaspResults, dataset, options) {
 
 ###--------------------------------------------------------------------------------------------------------------------------###
 
+#' @importFrom ggmice plot_flux
+.createFluxPlot <- function(jaspResults, options, dataset) {
+  if (!is.null(jaspResults[["fluxPlot"]])) return()
+
+  fluxPlot <- createJaspPlot(title = "Influx/Outflux Plot", height = 320, width = 480)
+  fluxPlot$dependOn(options = c("variables", "groupVar"))
+
+  # Bind plot to jaspResults
+  jaspResults[["fluxPlot"]] <- fluxPlot
+
+  fluxPlot$plotObject <- dataset[ , encodeColNames(options$variables), drop = FALSE] |> ggmice::plot_flux()
+}
+
+#' @importFrom ggmice plot_corr
+.createCorrPlot <- function(jaspResults, options, dataset) {
+  if (!is.null(jaspResults[["corrPlot"]])) return()
+
+  corrPlot <- createJaspPlot(title = "Correlation Plot", height = 320, width = 480)
+  corrPlot$dependOn(options = c("variables", "groupVar"))
+
+  # Bind plot to jaspResults
+  jaspResults[["corrPlot"]] <- corrPlot
+
+  corrPlot$plotObject <- dataset[ , encodeColNames(options$variables), drop = FALSE] |> ggmice::plot_corr()
+}
+
 #' @importFrom ggmice plot_pattern
 .createPatternPlot <- function(jaspResults, options, dataset) {
   if (!is.null(jaspResults[["patternPlot"]])) return()
 
   patternPlot <- createJaspPlot(title = "Response Pattern Plot", height = 320, width = 480)
   patternPlot$dependOn(options = c("variables", "groupVar"))
-  
+
   # Bind plot to jaspResults
   jaspResults[["patternPlot"]] <- patternPlot
 
-  patternPlot$plotObject <- dataset[ , encodeColNames(options$variables), drop = FALSE] |> plot_pattern()
+  patternPlot$plotObject <- dataset[ , encodeColNames(options$variables), drop = FALSE] |> ggmice::plot_pattern()
 }
