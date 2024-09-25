@@ -143,3 +143,15 @@ ImputationInternal <- function(jaspResults, dataset, options) {
     densityPlot$plotObject <- jaspResults[["miceMids"]] |> ggmice(aes(x = v, group = .imp)) + geom_density()
   }
 }
+
+###--------------------------------------------------------------------------------------------------------------------------###
+
+.runRegression <- function(jaspResults, options, offset = 2) {
+  modelContainer  <- .linregGetModelContainer(jaspResults, position = offset + 1)
+  model <- jaspResults[["miceMids"]] |>
+    complete(1) |>
+    .linregCalcModel(modelContainer, dataset = _, options, ready)
+
+  # if (is.null(modelContainer[["summaryTable"]]))
+  #   .linregCreateSummaryTable(modelContainer, model, options, position = 1)
+}

@@ -20,6 +20,7 @@ import QtQuick
 import QtQuick.Layouts
 import JASP
 import JASP.Controls
+import "./regression"	as	Regression
 
 // All Analysis forms must be built with the From QML item
 Form
@@ -88,5 +89,32 @@ Form
 		}
 
 	}
+
+	Regression.RegressionLinear { id: regressionLinear;	visible: true } //runRegression.checked }
+
+		// VariablesForm
+		// {
+
+		// 	AvailableVariablesList { name:	"potentialDependent" }
+		// 	AssignedVariablesList
+		// 	{
+		// 		name:			"dependent"
+		// 		title:			qsTr("Dependent Variable")
+		// 		singleVariable:	true
+		// 	}
+
+		// }
+
+		// VariablesForm
+		// {
+
+		// 	AvailableVariablesList { name:	"potentialIndependent" }
+		// 	AssignedVariablesList
+		// 	{
+		// 		name:	"independents"
+		// 		title:	qsTr("Independent Variables")
+		// 	}
+
+		// }
 
 }
