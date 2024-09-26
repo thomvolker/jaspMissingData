@@ -39,15 +39,19 @@ ImputationInternal <- function(jaspResults, dataset, options) {
     miceMids <- .initMiceMids()
     options <- .imputeMissingData(miceMids, options, dataset)
 
+    ## Initialize containers to hold the convergence plots and analysis results:
+    # convergencePlots  <- .initConvergencePlots(jaspResults)
+    # analysisContainer <- .initAnalysisContainer(jaspResults)
     .initConvergencePlots(jaspResults)
+    .initAnalysisContainer(jaspResults)
 
     if(options$tracePlot)
-      .createTracePlot(jaspResults, miceMids)
+      .createTracePlot(jaspResults[["ConvergencePlots"]], miceMids)
     if(options$densityPlot)
-      .createDensityPlot(jaspResults, miceMids, options)
+      .createDensityPlot(jaspResults[["ConvergencePlots"]], miceMids, options)
 
     if(options$runLinearRegression)
-      .runRegression(jaspResults, miceMids, options)
+      .runRegression(jaspResults[["AnalysisContainer"]], miceMids, options)
   }
     return()
 }
@@ -91,6 +95,7 @@ ImputationInternal <- function(jaspResults, dataset, options) {
   # Calculate any options common to multiple parts of the analysis
   options$lastMidsUpdate <- Sys.time()
   options$imputedVariables <- ""
+
   options
 }
 
@@ -112,6 +117,21 @@ ImputationInternal <- function(jaspResults, dataset, options) {
   convergencePlots$dependOn(options = "lastMidsUpdate")
 
   jaspResults[["ConvergencePlots"]] <- convergencePlots
+  
+  # jaspResults[["ConvergencePlots"]]
+}
+
+###--------------------------------------------------------------------------------------------------------------------------###
+
+.initAnalysisContainer <- function(jaspResults) {
+  if(!is.null(jaspResults[["AnalysisContainer"]])) return()
+  
+  analysisContainer <- createJaspContainer(title = "Analyses")
+  analysisContainer$dependOn(options = "lastMidsUpdate")
+
+  jaspResults[["AnalysisContainer"]] <- analysisContainer
+  
+  # jaspResults[["AnalysisContainer"]]
 }
 
 ###-Output Functions---------------------------------------------------------------------------------------------------------###
@@ -154,7 +174,7 @@ ImputationInternal <- function(jaspResults, dataset, options) {
   # tracePlot$dependOn(options = "variables")
   
   # Bind plot to jaspResults via the convergencePlots container:
-  convergencePlots[["tracePlot"]] <- tracePlot
+  convergencePlots[["TracePlot"]] <- tracePlot
 
   tracePlot$plotObject <- miceMids$object |> plot_trace()
 }
@@ -165,14 +185,14 @@ ImputationInternal <- function(jaspResults, dataset, options) {
 #' @importFrom ggplot2 aes geom_density
 .createDensityPlot <- function(convergencePlots, miceMids, options) {
 
-  convergencePlots[["densityPlots"]] <- createJaspContainer("Density Plots")
+  convergencePlots[["DensityPlots"]] <- createJaspContainer("Density Plots")
 
   for(v in options$imputedVariables) {
     densityPlot <- createJaspPlot(title = v, height = 320, width = 480)
     # densityPlot$dependOn(options = "variables")
 
     ## Bind the density plot for variable 'v' to the 'densityPlots' container in jaspResults
-    convergencePlots[["densityPlots"]][[v]] <- densityPlot
+    convergencePlots[["DensityPlots"]][[v]] <- densityPlot
 
     ## Populate the plot object
     densityPlot$plotObject <- miceMids$object |> ggmice(aes(x = .data[[v]], group = .imp)) + geom_density()
@@ -189,7 +209,6 @@ ImputationInternal <- function(jaspResults, dataset, options) {
   modelContainer <- jaspRegression:::.linregGetModelContainer(jaspResults, position = offset + 1)
 
   dataset <- miceMids$object |> complete(1) 
-  # dataset <- jaspResults[["miceMids"]]$object |> complete(1) 
   model   <- jaspRegression:::.linregCalcModel(modelContainer, dataset, options, ready)
 
   if (is.null(modelContainer[["summaryTable"]]))
