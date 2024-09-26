@@ -90,7 +90,30 @@ Form
 
 	}
 
-	Regression.RegressionLinear { id: regressionLinear;	visible: true } //runRegression.checked }
+	Group
+	{
+
+		title:	qsTr("Analyses")
+
+		CheckBox
+		{
+			name:		"runLinearRegression"
+			label:		qsTr("Linear Regression")
+			id:			runLinearRegression
+			checked:	false
+		}
+
+		CheckBox
+		{
+			name:		"runLogisticRegression"
+			label:		qsTr("Logistic Regression")
+			id:			runLogisticRegression
+			checked:	false
+		}
+
+	}
+
+	Regression.RegressionLinear { id: regressionLinear;	visible: runLinearRegression.checked }
 
 		// VariablesForm
 		// {
