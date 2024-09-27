@@ -6,13 +6,13 @@ Description
 	name:			"jaspImputation"
 	title:			qsTr("Imputation")
 	description:	qsTr("Impute missing data by means of Multivariate Imputation by Chained Equations (MICE).")
-	version:		"0.1"
+	version:		"0.1.0"
 	author:			"JASP Team and MICE Team"
 	maintainer:		"JASP Team <info@jasp-stats.org>"
 	website:		"https://jasp-stats.org"
 	license:		"GPL (>= 2)"
 	icon:			"impMice.svg"
-	hasWrappers:	true
+	hasWrappers:	false
 
 	GroupTitle
 	{
@@ -39,6 +39,6 @@ Description
 	{
 		menu:	qsTr("Multiple Imputation")
 		title:	qsTr("Missing Data Imputation with MICE")
-		func:	"Imputation"
+		func:	"MissingDataImputation"
 	}
 }

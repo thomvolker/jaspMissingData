@@ -1,12 +1,12 @@
 Package: jaspImputation
 Type: Package
-Title: A module for JASP
+Title: A module for missing data analysis in JASP
 Version: 0.1.0
-Date: 2024-03-01
+Date: 2024-09-27
 Author: JASP Team
 Website: jasp-stats.org
 Maintainer: JASP Team <info@jasp-stats.org>
-Description: This module offers functions and procedures to inspect, impute and analyse incomplete data.
+Description: This module offers procedures to inspect, impute, and analyse incomplete data in JASP.
 License: GPL (>= 2)
 Encoding: UTF-8
 Imports:

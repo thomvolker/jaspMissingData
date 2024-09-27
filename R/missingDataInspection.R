@@ -19,7 +19,7 @@
 
 #' Inspect the missing data problem
 #' @export
-MissingDataInspectionInternal <- function(jaspResults, dataset, options) {
+MissingDataInspection <- function(jaspResults, dataset, options) {
   # Set title
   jaspResults$title <- "Missing Data Inspection"
   # Init options: add variables to options to be used in the remainder of the analysis
@@ -34,8 +34,6 @@ MissingDataInspectionInternal <- function(jaspResults, dataset, options) {
 
     # Compute (a list of) results from which tables and plots can be created
     #localResults <- .computeResults(jaspResults, dataset, options)
-
-
 
     if(options$patternPlot) # always active by default
       .createPatternPlot(jaspResults, options, dataset)
@@ -122,7 +120,7 @@ MissingDataInspectionInternal <- function(jaspResults, dataset, options) {
 #       )
 #}
 
-###-Output Functions---------------------------------------------------------------------------------------------------------###
+###-Output Functions-------------------------------------------------------------------------------------------------###
 
 #' @importFrom mice flux
 .createFluxTable <- function(jaspResults, options, dataset) {
@@ -160,7 +158,7 @@ MissingDataInspectionInternal <- function(jaspResults, dataset, options) {
   )
 }
 
-###--------------------------------------------------------------------------------------------------------------------------###
+###------------------------------------------------------------------------------------------------------------------###
 
 #' @importFrom ggmice plot_flux
 .createFluxPlot <- function(jaspResults, options, dataset) {
@@ -175,6 +173,8 @@ MissingDataInspectionInternal <- function(jaspResults, dataset, options) {
   fluxPlot$plotObject <- dataset[ , encodeColNames(options$variables), drop = FALSE] |> ggmice::plot_flux()
 }
 
+###------------------------------------------------------------------------------------------------------------------###
+
 #' @importFrom ggmice plot_corr
 .createCorrPlot <- function(jaspResults, options, dataset) {
   if (!is.null(jaspResults[["corrPlot"]])) return()
@@ -187,6 +187,8 @@ MissingDataInspectionInternal <- function(jaspResults, dataset, options) {
 
   corrPlot$plotObject <- dataset[ , encodeColNames(options$variables), drop = FALSE] |> ggmice::plot_corr()
 }
+
+###------------------------------------------------------------------------------------------------------------------###
 
 #' @importFrom ggmice plot_pattern
 .createPatternPlot <- function(jaspResults, options, dataset) {

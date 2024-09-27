@@ -19,11 +19,10 @@
 
 #' Multiply impute missing data with MICE
 #' @export
-Imputation <- function(jaspResults, dataset, options) {
+MissingDataImputation <- function(jaspResults, dataset, options) {
   # Set title
   jaspResults$title <- "Multiple Imputation with MICE"
 
-  # browser() ############################################################################################################
   # Init options: add variables to options to be used in the remainder of the analysis
   options <- .initImputationOptions(options)
 
@@ -51,9 +50,15 @@ Imputation <- function(jaspResults, dataset, options) {
     if(options$densityPlot)
       .createDensityPlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]], options)
 
-    if(options$runLinearRegression)
-      .runRegression(jaspResults[["AnalysisContainer"]], jaspResults[["MiceMids"]], options)
+    if(options$runLinearRegression) {
+      miFits <- .estimateRegressionModels(jaspResults[["MiceMids"]], options)
+      saveRDS(miFits, "/home/kylelang/software/jasp/modules/imputation/data/miFits.rds")
+      modelContainer <- .poolRegressionEstimates(jaspResults, miFits, options)
+      .populateRegressionResults(jaspResults, modelContainer, options)
+      # .runRegression(jaspResults[["AnalysisContainer"]], jaspResults[["MiceMids"]], options)
+    }
   }
+
     return()
 }
 
@@ -75,6 +80,7 @@ Imputation <- function(jaspResults, dataset, options) {
   # Calculate any options common to multiple parts of the analysis
   options$lastMidsUpdate <- Sys.time()
   options$imputedVariables <- ""
+  options$fType <- 1
 
   options
 }
@@ -121,17 +127,20 @@ Imputation <- function(jaspResults, dataset, options) {
 #' @importFrom mice mice complete
 .imputeMissingData <- function(miceMids, options, dataset) {
 
-  miceOut <- tryCatch(
+  miceOut <- try(
     with(options,
-      mice(data  = dataset[ , encodeColNames(variables), drop = FALSE],
+      mice(
+        data  = dataset[ , encodeColNames(variables), drop = FALSE],
         m     = nImp,
         maxit = nIter,
         seed  = seed,
-        print = FALSE)
+        print = FALSE
+      )
     )
   )
 
-  if(class(miceOut) != "try-error") {
+  if (!inherits(miceOut, "try-error")) {
+    saveRDS(miceOut, "/home/kylelang/software/jasp/modules/imputation/data/miceOut.rds")
     miceMids$object <- miceOut
     options$lastMidsUpdate <- Sys.time()
     options$imputedVariables <- (sapply(miceOut$imp, nrow) > 0) |> which() |> names()
@@ -183,34 +192,75 @@ Imputation <- function(jaspResults, dataset, options) {
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-.runRegression <- function(jaspResults, miceMids, options, offset = 2) {
+.estimateRegressionModels <- function(miceMids, options) {
   ready <- inherits(miceMids$object, "mids") && # We can't do an analysis before imputing
     options$dependent != "" &&
     (length(unlist(options$modelTerms)) > 0 || options$interceptTerm)
 
+  # browser() ############################################################################################################
+
+  dummyContainer <- createJaspContainer()
+  outData <- list()
+  models <- list()
+  for (m in 1:options$nImp) {
+    dataset <- outData[[m]] <- miceMids$object |> complete(m) 
+    model   <- createJaspContainer() |> jaspRegression:::.linregCalcModel(dataset, options, ready)
+
+    models[[m]] <- model
+
+    if (m == 1) {
+      meta <- lapply(model, "[", x = c("predictors", "number", "title"))
+      fits <- vector("list", length(model))
+    }
+
+    for (i in seq_along(model)) fits[[i]][[m]] <- model[[i]]$fit
+    
+  }
+
+  saveRDS(outData, "/home/kylelang/software/jasp/modules/imputation/data/outData.rds")
+  saveRDS(models, "/home/kylelang/software/jasp/modules/imputation/data/models.rds")
+
+  list(meta = meta, fits = fits)
+}
+
+###------------------------------------------------------------------------------------------------------------------###
+
+.poolRegressionEstimates <- function(jaspResults, miFits, options, offset = length(jaspResults)) {
   modelContainer <- jaspRegression:::.linregGetModelContainer(jaspResults, position = offset + 1)
 
-  dataset <- miceMids$object |> complete(1) 
-  model   <- jaspRegression:::.linregCalcModel(modelContainer, dataset, options, ready)
+  models <- list()
+  for (i in seq_along(miFits$meta)) {
+    pooledFit <- pooledLmObject(miFits$fits[[i]], fType = options$fType)
+    models[[i]] <- c(miFits$meta[[i]], pooledFit)
+  }
+
+  modelContainer[["models"]] <- models
+}
+
+###------------------------------------------------------------------------------------------------------------------###
+
+.populateRegressionResults <- function(jaspResults, modelContainer, options) {
+
+  model <- modelContainer[["models"]]
 
   if (is.null(modelContainer[["summaryTable"]]))
     jaspRegression:::.linregCreateSummaryTable(modelContainer, model, options, position = 1)
 
-  if (options$modelFit && is.null(modelContainer[["anovaTable"]]))
-    jaspRegression:::.linregCreateAnovaTable(modelContainer, model, options, position = 2)
+  # if (options$modelFit && is.null(modelContainer[["anovaTable"]]))
+  #   jaspRegression:::.linregCreateAnovaTable(modelContainer, model, options, position = 2)
 
-  if (options$coefficientEstimate && is.null(modelContainer[["coeffTable"]]))
-    jaspRegression:::.linregCreateCoefficientsTable(modelContainer, model, dataset, options, position = 3)
+  # if (options$coefficientEstimate && is.null(modelContainer[["coeffTable"]]))
+  #   jaspRegression:::.linregCreateCoefficientsTable(modelContainer, model, dataset, options, position = 3)
 
-  if (options$coefficientBootstrap && is.null(modelContainer[["bootstrapCoeffTable"]]))
-    jaspRegression:::.linregCreateBootstrapCoefficientsTable(modelContainer, model, dataset, options, position = 4)
+  # if (options$coefficientBootstrap && is.null(modelContainer[["bootstrapCoeffTable"]]))
+  #   jaspRegression:::.linregCreateBootstrapCoefficientsTable(modelContainer, model, dataset, options, position = 4)
 
-  if (options$partAndPartialCorrelation && is.null(modelContainer[["partialCorTable"]]))
-    jaspRegression:::.linregCreatePartialCorrelationsTable(modelContainer, model, dataset, options, position = 6)
+  # if (options$partAndPartialCorrelation && is.null(modelContainer[["partialCorTable"]]))
+  #   jaspRegression:::.linregCreatePartialCorrelationsTable(modelContainer, model, dataset, options, position = 6)
 
-  if (options$covarianceMatrix && is.null(modelContainer[["coeffCovMatrixTable"]]))
-    jaspRegression:::.linregCreateCoefficientsCovarianceMatrixTable(modelContainer, model, options, position = 7)
+  # if (options$covarianceMatrix && is.null(modelContainer[["coeffCovMatrixTable"]]))
+  #   jaspRegression:::.linregCreateCoefficientsCovarianceMatrixTable(modelContainer, model, options, position = 7)
 
-  if (options$collinearityDiagnostic && is.null(modelContainer[["collinearityTable"]]))
-    jaspRegression:::.linregCreateCollinearityDiagnosticsTable(modelContainer, model, options, position = 8)
+  # if (options$collinearityDiagnostic && is.null(modelContainer[["collinearityTable"]]))
+  #   jaspRegression:::.linregCreateCollinearityDiagnosticsTable(modelContainer, model, options, position = 8)
 }
