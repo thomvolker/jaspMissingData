@@ -15,14 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-###-Main Function------------------------------------------------------------------------------------------------------------###
+###-Main Function----------------------------------------------------------------------------------------------------###
 
 #' Multiply impute missing data with MICE
 #' @export
-ImputationInternal <- function(jaspResults, dataset, options) {
+Imputation <- function(jaspResults, dataset, options) {
   # Set title
   jaspResults$title <- "Multiple Imputation with MICE"
 
+  # browser() ############################################################################################################
   # Init options: add variables to options to be used in the remainder of the analysis
   options <- .initImputationOptions(options)
 
@@ -36,8 +37,8 @@ ImputationInternal <- function(jaspResults, dataset, options) {
     # Output containers, tables, and plots based on the results. These functions should not return anything!
     # .createImputationContainer(jaspResults, options)
 
-    miceMids <- .initMiceMids()
-    options <- .imputeMissingData(miceMids, options, dataset)
+    .initMiceMids(jaspResults)
+    options <- .imputeMissingData(jaspResults[["MiceMids"]], options, dataset)
 
     ## Initialize containers to hold the convergence plots and analysis results:
     # convergencePlots  <- .initConvergencePlots(jaspResults)
@@ -46,38 +47,17 @@ ImputationInternal <- function(jaspResults, dataset, options) {
     .initAnalysisContainer(jaspResults)
 
     if(options$tracePlot)
-      .createTracePlot(jaspResults[["ConvergencePlots"]], miceMids)
+      .createTracePlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]])
     if(options$densityPlot)
-      .createDensityPlot(jaspResults[["ConvergencePlots"]], miceMids, options)
+      .createDensityPlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]], options)
 
     if(options$runLinearRegression)
-      .runRegression(jaspResults[["AnalysisContainer"]], miceMids, options)
+      .runRegression(jaspResults[["AnalysisContainer"]], jaspResults[["MiceMids"]], options)
   }
     return()
 }
 
-###-Common Functions (We shouldn't be copying these)-------------------------------------------------------------------------###
-
-.readData <- function(options) {
-  vars <- unlist(options$variables)
-  # Read in the dataset using the built-in functions
-  if (!is.null(options$groupVar) && options$groupVar == "")
-    .readDataSetToEnd(columns = vars, columns.as.factor = options$groupVar)
-  else
-    .readDataSetToEnd(columns = vars)
-}
-
-###--------------------------------------------------------------------------------------------------------------------------###
-
-.errorHandling <- function(dataset, options)
-  .hasErrors(dataset, 
-             "run", 
-             type = c('observations', 'variance', 'infinity'),
-             all.target = options$variables,
-             observations.amount = '< 2',
-             exitAnalysisIfErrors = TRUE)
-
-###--------------------------------------------------------------------------------------------------------------------------###
+###------------------------------------------------------------------------------------------------------------------###
 
 # .createImputationContainer <- function(jaspResults, options) {
 #   if (!is.null(jaspResults[["ImputationContainer"]])) return()
@@ -88,7 +68,7 @@ ImputationInternal <- function(jaspResults, dataset, options) {
 #   jaspResults[["ImputationContainer"]] <- imputationContainer
 # }
 
-###-Init Functions-----------------------------------------------------------------------------------------------------------###
+###-Init Functions---------------------------------------------------------------------------------------------------###
 
 .initImputationOptions <- function(options) {
   # Determine if analysis can be run with user input
@@ -99,16 +79,18 @@ ImputationInternal <- function(jaspResults, dataset, options) {
   options
 }
 
-###--------------------------------------------------------------------------------------------------------------------------###
+###------------------------------------------------------------------------------------------------------------------###
 
-.initMiceMids <- function() {
+.initMiceMids <- function(jaspResults) {
+  if (!is.null(jaspResults[["MiceMids"]])) return()
+
   miceMids <- createJaspState()
   miceMids$dependOn(options = c("variables", "nImps", "nIter", "seed"))
 
-  miceMids
+  jaspResults[["MiceMids"]] <- miceMids
 }
 
-###--------------------------------------------------------------------------------------------------------------------------###
+###------------------------------------------------------------------------------------------------------------------###
 
 .initConvergencePlots <- function(jaspResults) {
   if(!is.null(jaspResults[["ConvergencePlots"]])) return()
@@ -121,7 +103,7 @@ ImputationInternal <- function(jaspResults, dataset, options) {
   # jaspResults[["ConvergencePlots"]]
 }
 
-###--------------------------------------------------------------------------------------------------------------------------###
+###------------------------------------------------------------------------------------------------------------------###
 
 .initAnalysisContainer <- function(jaspResults) {
   if(!is.null(jaspResults[["AnalysisContainer"]])) return()
@@ -134,7 +116,7 @@ ImputationInternal <- function(jaspResults, dataset, options) {
   # jaspResults[["AnalysisContainer"]]
 }
 
-###-Output Functions---------------------------------------------------------------------------------------------------------###
+###-Output Functions-------------------------------------------------------------------------------------------------###
 
 #' @importFrom mice mice complete
 .imputeMissingData <- function(miceMids, options, dataset) {
@@ -164,7 +146,7 @@ ImputationInternal <- function(jaspResults, dataset, options) {
   options
 }
 
-###--------------------------------------------------------------------------------------------------------------------------###
+###------------------------------------------------------------------------------------------------------------------###
 
 #' @importFrom ggmice plot_trace
 .createTracePlot <- function(convergencePlots, miceMids) {
@@ -179,7 +161,7 @@ ImputationInternal <- function(jaspResults, dataset, options) {
   tracePlot$plotObject <- miceMids$object |> plot_trace()
 }
 
-###--------------------------------------------------------------------------------------------------------------------------###
+###------------------------------------------------------------------------------------------------------------------###
 
 #' @importFrom ggmice ggmice densityplot
 #' @importFrom ggplot2 aes geom_density
@@ -199,7 +181,7 @@ ImputationInternal <- function(jaspResults, dataset, options) {
   }
 }
 
-###--------------------------------------------------------------------------------------------------------------------------###
+###------------------------------------------------------------------------------------------------------------------###
 
 .runRegression <- function(jaspResults, miceMids, options, offset = 2) {
   ready <- inherits(miceMids$object, "mids") && # We can't do an analysis before imputing
