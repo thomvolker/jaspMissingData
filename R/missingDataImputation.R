@@ -36,6 +36,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     # Output containers, tables, and plots based on the results. These functions should not return anything!
     # .createImputationContainer(jaspResults, options)
 
+    # browser() #########################################################################################################
+
     .initMiceMids(jaspResults)
     options <- .imputeMissingData(jaspResults[["MiceMids"]], options, dataset)
 
@@ -53,7 +55,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     if(options$runLinearRegression) {
       miFits <- .estimateRegressionModels(jaspResults[["MiceMids"]], options)
       saveRDS(miFits, "/home/kylelang/software/jasp/modules/imputation/data/miFits.rds")
-      modelContainer <- .poolRegressionEstimates(jaspResults, miFits, options)
+      modelContainer <- .poolRegressionEstimates(jaspResults, miFits, options, offset = 0)
       .populateRegressionResults(jaspResults, modelContainer, options)
       # .runRegression(jaspResults[["AnalysisContainer"]], jaspResults[["MiceMids"]], options)
     }
@@ -130,7 +132,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   miceOut <- try(
     with(options,
       mice(
-        data  = dataset[ , encodeColNames(variables), drop = FALSE],
+        # data  = dataset[ , encodeColNames(variables), drop = FALSE],
+        data  = dataset[ , variables, drop = FALSE],
         m     = nImp,
         maxit = nIter,
         seed  = seed,
@@ -225,13 +228,16 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-.poolRegressionEstimates <- function(jaspResults, miFits, options, offset = length(jaspResults)) {
+.poolRegressionEstimates <- function(jaspResults, miFits, options, offset) {
+
+  # browser() ############################################################################################################
+
   modelContainer <- jaspRegression:::.linregGetModelContainer(jaspResults, position = offset + 1)
 
-  models <- list()
-  for (i in seq_along(miFits$meta)) {
+  models <- miFits$meta
+  for (i in seq_along(miFits$fits)) {
     pooledFit <- pooledLmObject(miFits$fits[[i]], fType = options$fType)
-    models[[i]] <- c(miFits$meta[[i]], pooledFit)
+    models[[i]]$fit <- pooledFit
   }
 
   modelContainer[["models"]] <- models
@@ -240,6 +246,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 ###------------------------------------------------------------------------------------------------------------------###
 
 .populateRegressionResults <- function(jaspResults, modelContainer, options) {
+
+  # browser() ############################################################################################################
 
   model <- modelContainer[["models"]]
 
@@ -264,3 +272,52 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   # if (options$collinearityDiagnostic && is.null(modelContainer[["collinearityTable"]]))
   #   jaspRegression:::.linregCreateCollinearityDiagnosticsTable(modelContainer, model, options, position = 8)
 }
+
+###------------------------------------------------------------------------------------------------------------------###
+
+.lmFun <- function(formula, data, options, ...) {
+  ## If 'data' is a mids object, broadcast the model estimation across all imputed datasets
+  if (inherits(data, "mids")) {
+    return(
+      with(data, stats::lm(formula = as.formula(formula), ...)) |> pooledLmObject(fType = options$fType)
+    )
+  } else { # Otherwise, default to basic lm()
+    return(
+      stats::lm(formula = formula, data = data, ...)
+    )
+  }
+}
+
+# options <- list(fType = 3)
+
+# getwd()
+# miceOut <- readRDS("../data/miceOut.rds")
+# formula <- "hgt ~ wgt + hc + reg"
+
+# class(miceOut)
+# tmp <- .lmFun(formula, miceOut, options)
+# tmp
+
+# s1 <- summary(tmp)
+# s1
+
+# class(s1)
+
+# summary(tmp) |> print()
+
+# tmp |> class()
+
+# summary(tmp) |> print()
+
+# coef(tmp)
+
+# summary(tmp)$r.squared
+
+# .lmFun(formula, complete(miceOut, 1), options)
+
+# class(tmp[[2]])
+
+# tmp
+# pool(tmp)
+
+# tmp$analyses |> class()

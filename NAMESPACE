@@ -2,6 +2,7 @@
 
 S3method(coef,pooledlm)
 S3method(fitted,pooledlm)
+S3method(print,summary.pooledlm)
 S3method(resid,pooledlm)
 S3method(summary,pooledlm)
 export(MissingDataImputation)
