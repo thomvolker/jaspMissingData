@@ -53,44 +53,56 @@
 # fits <- fits1
 # fType <- 3
 
+###------------------------------------------------------------------------------------------------------------------###
+
+#' @export
+pooledLm <- function(formula, data, weights, fType = 1, ...) {
+  if (mice::is.mids(data))
+    fits <- with(data, stats::lm(formula = as.formula(formula), weights = weights, ...))
+    # fits <- with(data, stats::lm(formula = as.formula(form), weights = weights, ...))
+  else if (is.list(data) && !is.data.frame(data))
+    fits <- lapply(data, function(datM) stats::lm(formula = formula, data = datM, weights = weights, ...))
+  else
+    stop("The 'data' argument must be a 'mids' object or a list of data.frames containing separate imputed datsets.")
+
+  # browser() ############################################################################################################
+
+  pooledLmObject(fits, fType, ...)
+}
+
+###------------------------------------------------------------------------------------------------------------------###
+
 #' @export
 pooledLmObject <- function(fits, 
                            fType = 1, 
-                           include = list(model = FALSE, qr = FALSE, x = FALSE)
-                           ) 
+                           include = list(model = FALSE, qr = FALSE, x = FALSE),
+                           ...) 
 {
-  .checkInputs(fits, fType)
-
-  if(mice::is.mira(fits)) {
-    fits0 <- fits
-    fits  <- fits$analyses # We need direct access to the lm objects
-  }
+  fits <- .checkInputs(fits, fType)
 
   ## Much of the lm object doesn't change across imputed datasets, so we can keep one of the original fits and replace
   ## the appropriate parts with MI-based estimates.
-  obj        <- fits[[1]]
+  obj        <- fits$analyses[[1]]
   class(obj) <- c("pooledlm", class(obj))
 
-  ## We need to extract these things before casting the 'fits' as a mira object
-  residuals <- sapply(fits, resid)
-  yHats     <- sapply(fits, fitted)
-  effects   <- sapply(fits, effects)
+  ## We need to extract these things before casting the 'fits' as a mira object:
+  residuals <- sapply(fits$analyses, resid)
+  yHats     <- sapply(fits$analyses, fitted)
+  effects   <- sapply(fits$analyses, effects)
 
   ## The pooled estimates of linear effects are just the arithmetic mean across imputations:
   obj$residuals     <- rowMeans(residuals)
   obj$fitted.values <- rowMeans(yHats)
   obj$effects       <- rowMeans(effects)
 
-  obj$singularityCheckValue <- sapply(fits, function(x) x$qr$qr |> ncol()) |> min()
+  obj$singularityCheckValue <- sapply(fits$analyses, function(x) x$qr$qr |> ncol()) |> min()
 
   ## Do we keep the stuff we can't pool?
-  if(include$model) obj$model <- lapply(fits, "[[", x = "model") else obj$model <- NA
-  if(include$qr)    obj$qr    <- lapply(fits, "[[", x = "qr")    else obj$qr    <- NA
-  if(include$x)     obj$x     <- lapply(fits, "[[", x = "x")     else obj$x     <- NA
+  if(include$model) obj$model <- lapply(fits$analyses, "[[", x = "model") else obj$model <- NA
+  if(include$qr)    obj$qr    <- lapply(fits$analyses, "[[", x = "qr")    else obj$qr    <- NA
+  if(include$x)     obj$x     <- lapply(fits$analyses, "[[", x = "x")     else obj$x     <- NA
 
   ## Use the mice pooling routines for the more complicated cases:
-  if(is.null(fits0)) fits <- mice::as.mira(fits) else fits <- fits0
-
   pooled      <- list()
   pooled$coef <- mice::pool(fits)
   pooled$r2   <- mice::pool.r.squared(fits)
@@ -113,10 +125,16 @@ pooledLmObject <- function(fits,
 
   ## Calculate the pooled residual variance:
   resVars   <- pooled$coef$glanced$sigma^2
-  u         <- mean(resVars)
+  w         <- mean(resVars)
   b         <- var(resVars)
-  pooled$s2 <- u + b + (b / length(fits))
+  pooled$s2 <- w + b + (b / length(fits))
   
+  ## Calculate the pooled asymptotic covariance matrix of the regression coefficients:
+  if(obj$rank > 1)
+    pooled$vcov <- .pooledAsymptoticCov(fits$analyses)
+  else
+    pooled$vcov <- with(pooled$coef$pooled, matrix(ubar + b + (b / m), dimnames = list(term, term)))
+
   ## Include the extra pooled stats we'll need to downstream
   obj$pooled <- pooled
 
@@ -129,24 +147,29 @@ pooledLmObject <- function(fits,
 ###------------------------------------------------------------------------------------------------------------------###
 
 .checkInputs <- function(fits, fType) {
-  if (!mice::is.mira(fits) || !is.list(fits))
+  if (!(mice::is.mira(fits) || is.list(fits)))
     stop("The 'fits' argument must be a a 'mira' object or list of fitted lm models.")
 
   if (!mice::is.mira(fits)) {
     fitsAreLm <- sapply(fits, inherits, what = "lm")
     if (!all(fitsAreLm)) stop("All entries in the 'fits' list must have class 'lm'.")
+
+    ## We want 'fits' to be a mira object
+    fits <- mice::as.mira(fits)
   }
 
   if (!fType %in% 1:3) stop("The 'fType' argument must be 1, 2, or 3.")
 
-  rank <- ifelse(mice::is.mira(fits), fits$analyses[[1]]$rank, fits[[1]]$rank)
-  if (rank <= 0) stop("I don't know how to pool models with rank(X) < 1.")
+  ranks <- sapply(fits$analyses, "[[", x = "rank")
+  if (any(ranks <= 0)) stop("I don't know how to pool models with rank(X) < 1.")
+
+  fits
 }
 
 ###------------------------------------------------------------------------------------------------------------------###
 
 #' @export
-summary.pooledlm <- function(object) {
+summary.pooledlm <- function(object, ...) {
   out <- structure(list(), class = c("summary.pooledlm", "summary.lm")) # Maybe we can just use the print method for summary.lm ? 
 
   ## We can pull a few things directly from the input object
@@ -159,6 +182,9 @@ summary.pooledlm <- function(object) {
   out$r.squared     <- object$pooled$r2[1, "est"]
   out$adj.r.squared <- object$pooled$r2A[1, "est"]
   out$sigma         <- object$pooled$s2 |> sqrt()
+
+  ## Reverse engineer the unscaled covariance matrix:
+  out$cov.unscaled <- with(object$pooled, vcov / s2)
 
   if (object$rank > 1) {
     f <- object$pooled$f$result |> as.numeric() |> head(3)
@@ -192,15 +218,156 @@ print.summary.pooledlm <- function(object, allowStarGazing = FALSE, ...)
 ###------------------------------------------------------------------------------------------------------------------###
 
 #' @export
-coef.pooledlm   <- function(object) object$coefficients
+coef.pooledlm   <- function(object, ...) object$coefficients
 #' @export
-resid.pooledlm  <- function(object) object$residuals
+vcov.pooledlm   <- function(object, ...) object$pooled$vcov
 #' @export
-fitted.pooledlm <- function(object) object$fitted.values
+resid.pooledlm  <- function(object, ...) object$residuals
+#' @export
+fitted.pooledlm <- function(object, ...) object$fitted.values
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-# test <- pooledLmObject(fits = miFits$fits[[2]], 1)
+.pooledAsymptoticCov <- function(fits) {
+  m <- length(fits)
+
+  coefs     <- sapply(fits, coef)
+  coefNames <- rownames(coefs)
+
+  ## Between-imputation var/covar:
+  b <- coefs |> t() |> var()
+
+  ## Average within-imputation var/covar:
+  w <- sapply(fits, vcov) |>
+    rowMeans() |>
+    matrix(nrow = length(coefNames), dimnames = list(coefNames, coefNames))
+
+  ## Total var/covar:
+  w + b + (b / m)
+}
+
+###------------------------------------------------------------------------------------------------------------------###
+
+
+# library(mice)
+# library(miceadds)
+# library(mitools)
+
+# miceOut <- mice::mice(mice::boys)
+# impData <- mice::complete(miceOut, "all")
+
+# undebug("pooledLm")
+
+# test <- pooledLm("hgt ~ wgt + hc + reg", miceOut, weights = NULL, fType = 1, x = TRUE)
+
+# coef(test)
+# stats::coefficients(test)
+
+# stats::df.residual(test)
+# test$df.residual
+
+# fit0 <- lm("hgt ~ wgt + hc + reg", data = mice::boys)
+
+# model.matrix(fit0) |> colnames()
+# coef(fit0) |> names()
+
+# summary(test) |> print()
+
+# all.vars(formula(test))
+# all.vars()
+
+# x
+# test <- pooledLm("hgt ~ wgt + hc + reg", impData, fType = 1)
+
+# form <- "hgt ~ wgt + hc + reg"
+# dat1 <- impData[[1]]
+
+# .lmFunction(form, dat1) |> summary()
+# .lmFunction(form, impData, FUN = pooledLm, fType = 2) |> summary() |> print()
+
+# x
+
+# test |> summary()
+# test |> summary() |> print()
+
+# sapply(fits$analyses, vcov)
+
+# x
+# fits <- with(miceOut, lm(hgt ~ wgt + hc + reg))
+
+# test <- pooledLmObject(fits)
+# sTest <- summary(test)
+
+# summary(test)
+# sTest
+
+# vcov(test)
+# coef(test)
+
+# cTest <- sTest$cov.unscaled
+
+# v2 <- cTest * sTest$sigma^2
+
+# v2 - vcov(test)
+
+# f1 <- fits$analyses[[1]]
+# s1 <- summary(f1)
+
+# s1
+
+# v1 <- vcov(s1)
+
+# c1 <- v1 / s1$sigma^2
+# c2 <- s1$cov.unscaled
+
+# c1 - c2
+
+# ls(s1)
+
+# ls(f1)
+
+
+# p1 <- mice::pool(fits)
+# p2 <- MIcombine(fits$analyses)
+
+# p1
+# p2
+
+# coef(p2)
+# vcov(p2)
+
+# class(p2)
+# mitools:::vcov.MIresult
+
+# fits <- fits$analyses
+
+# coefNames <- fits[[1]] |> coef() |> names()
+
+
+# template <- w
+# template
+# covs
+
+
+# v1 <- pooledAsymptoticCov(fits)
+# v2 <- MIcombine(fits) |> vcov()
+
+# v1 - v2
+
+# sapply(fits$analyses, coef) |> t() |> var()
+# lapply(fits$analyses, coef) |> do.call(rbind, args = _) |> var()
+
+# fits$analyses[[1]] |> ls()
+
+# fits$analyses[[1]][["rank"]]
+
+
+# ?MIcombine
+# x
+# test <- pooledLmObject(fits)
+
+# fits
+
 # test
 
 # coef(test)
