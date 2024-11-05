@@ -810,12 +810,19 @@ RegressionLinearInternal <- function(jaspResults, dataset = NULL, options) {
     model <- .linregCalcDurBinWatsonTestResults(modelContainer, model, options)
     return(model)
   }
+
+  # browser() ############################################################################################################
+
   nModels           <- length(options$modelTerms)
   dependent         <- options$dependent
+
+  saveRDS(dependent, "~/software/jasp/modules/imputation/data/dependent.rds")
 
   predictorsInNull  <- .linregGetPredictors(options$modelTerms[[1]][["components"]])
   predictorsInFull  <- .linregGetPredictors(options$modelTerms[[nModels]][["components"]]) # these include the null terms
   
+  saveRDS(predictorsInNull, "~/software/jasp/modules/imputation/data/predictorsInNull.rds")
+  saveRDS(predictorsInFull, "~/software/jasp/modules/imputation/data/predictorsInFull.rds")
   
   # if (options$weights != "")
   #   weights <- dataset[[options$weights]]
@@ -825,6 +832,8 @@ RegressionLinearInternal <- function(jaspResults, dataset = NULL, options) {
   weights <- rep(1, nrow(mice::boys))
 
   # TODO (KML): Figure out how to assign the weights when 'dataset' is a list of mids object (without touchting too much of the jaspRegression code).
+
+  saveRDS(options$modelTerms, "~/software/jasp/modules/imputation/data/modelTerms.rds")
 
   if (options$method %in% c("backward", "forward", "stepwise") && length(predictorsInFull) > 0)
     model <- .linregGetModelSteppingMethod(dependent, predictorsInFull, predictorsInNull, dataset, options, weights)
@@ -884,6 +893,9 @@ RegressionLinearInternal <- function(jaspResults, dataset = NULL, options) {
     # browser() ########################################################################################################
     thisModelTerms <- .linregGetPredictors(modelTerms[[i]][["components"]])
     formula <- .linregGetFormula(dependent, thisModelTerms, options$interceptTerm)
+
+    saveRDS(formula, "~/software/jasp/modules/imputation/data/formula.rds")
+
     if (!is.null(formula)) {
       # browser() ########################################################################################################
       # fit <- stats::lm(formula, data = dataset, weights = weights, x = TRUE)

@@ -17,14 +17,26 @@
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-.readData <- function(options) {
-  vars <- unlist(options$variables)
-  # Read in the dataset using the built-in functions
-  if (!is.null(options$groupVar) && options$groupVar != "")
-    .readDataSetToEnd(columns = vars, columns.as.factor = options$groupVar)
-  else
-    .readDataSetToEnd(columns = vars)
+.readyForMi <- function(options) length(options$variables) > 0
+
+###------------------------------------------------------------------------------------------------------------------###
+
+.readyForLinReg <- function(options, miceMids) {
+  inherits(miceMids$object, "mids") && # We can't do an analysis before imputing
+  options$dependent != "" &&
+  (length(unlist(options$modelTerms)) > 0 || options$interceptTerm)
 }
+
+###------------------------------------------------------------------------------------------------------------------###
+
+.readData <- function(options) dataset[unlist(options$variables)]
+#   vars <- unlist(options$variables)
+#   # Read in the dataset using the built-in functions
+#   if (!is.null(options$groupVar) && options$groupVar != "")
+#     .readDataSetToEnd(columns = vars, columns.as.factor = options$groupVar)
+#   else
+#     .readDataSetToEnd(columns = vars)
+# }
 
 ###------------------------------------------------------------------------------------------------------------------###
 

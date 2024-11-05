@@ -20,16 +20,19 @@
 #' Multiply impute missing data with MICE
 #' @export
 MissingDataImputation <- function(jaspResults, dataset, options) {
+
+  saveRDS(dataset, "~/software/jasp/modules/imputation/data/dataset.rds")
+
   # Set title
   jaspResults$title <- "Multiple Imputation with MICE"
 
   # Init options: add variables to options to be used in the remainder of the analysis
   options <- .initImputationOptions(options)
 
-  ready <- length(options$variables) > 0
-  if(ready) {
+  # ready <- length(options$variables) > 0
+  if (.readyForMi(options)) {
     # read dataset
-    dataset <- .readData(options)
+    # dataset <- .readData(options)
     # error checking
     errors <- .errorHandling(dataset, options)
 
@@ -47,12 +50,12 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     .initConvergencePlots(jaspResults)
     .initAnalysisContainer(jaspResults)
 
-    if(options$tracePlot)
+    if (options$tracePlot)
       .createTracePlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]])
-    if(options$densityPlot)
+    if (options$densityPlot)
       .createDensityPlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]], options)
 
-    if(options$runLinearRegression) {
+    if (options$runLinearRegression) {
       .lmFunction <<- .linregSetFittingFunction(options) # The deep assignment here is almost certainly a stupid idea
 
       .runRegression(jaspResults, jaspResults[["MiceMids"]], options)
@@ -95,7 +98,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 ###------------------------------------------------------------------------------------------------------------------###
 
 .initMiceMids <- function(jaspResults) {
-  if (!is.null(jaspResults[["MiceMids"]])) return()
+  if(!is.null(jaspResults[["MiceMids"]])) return()
 
   miceMids <- createJaspState()
   miceMids$dependOn(options = c("variables", "nImps", "nIter", "seed"))
@@ -131,14 +134,14 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 ###-Output Functions-------------------------------------------------------------------------------------------------###
 
-#' @importFrom mice mice complete
 .imputeMissingData <- function(miceMids, options, dataset) {
 
   miceOut <- try(
     with(options,
-      mice(
+      mice::mice(
         # data  = dataset[ , encodeColNames(variables), drop = FALSE],
-        data  = dataset[ , variables, drop = FALSE],
+        # data  = dataset[variables],
+        data  = dataset,
         m     = nImp,
         maxit = nIter,
         seed  = seed,
@@ -147,8 +150,12 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     )
   )
 
+  saveRDS(dataset, "~/software/jasp/modules/imputation/data/dataset2.rds")
+  saveRDS(miceOut, "~/software/jasp/modules/imputation/data/miceOut.rds")
+  saveRDS(options$variables, "~/software/jasp/modules/imputation/data/variables.rds")
+
   if (!inherits(miceOut, "try-error")) {
-    saveRDS(miceOut, "/home/kylelang/software/jasp/modules/imputation/data/miceOut.rds")
+    # saveRDS(miceOut, "/home/kylelang/software/jasp/modules/imputation/data/miceOut.rds")
     miceMids$object <- miceOut
     options$lastMidsUpdate <- Sys.time()
     options$imputedVariables <- (sapply(miceOut$imp, nrow) > 0) |> which() |> names()
@@ -165,7 +172,6 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-#' @importFrom ggmice plot_trace
 .createTracePlot <- function(convergencePlots, miceMids) {
   # if (!is.null(jaspResults[["tracePlot"]])) return()
 
@@ -175,13 +181,11 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   # Bind plot to jaspResults via the convergencePlots container:
   convergencePlots[["TracePlot"]] <- tracePlot
 
-  tracePlot$plotObject <- miceMids$object |> plot_trace()
+  tracePlot$plotObject <- miceMids$object |> ggmice::plot_trace()
 }
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-#' @importFrom ggmice ggmice densityplot
-#' @importFrom ggplot2 aes geom_density
 .createDensityPlot <- function(convergencePlots, miceMids, options) {
 
   convergencePlots[["DensityPlots"]] <- createJaspContainer("Density Plots")
@@ -194,7 +198,9 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     convergencePlots[["DensityPlots"]][[v]] <- densityPlot
 
     ## Populate the plot object
-    densityPlot$plotObject <- miceMids$object |> ggmice(aes(x = .data[[v]], group = .imp)) + geom_density()
+    densityPlot$plotObject <-
+      ggmice::ggmice(miceMids$object, ggplot2::aes(x = .data[[v]], group = .imp)) +
+      ggplot2::geom_density()
   }
 }
 

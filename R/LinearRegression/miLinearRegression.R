@@ -69,16 +69,20 @@
 
 .runRegression <- function(jaspResults, miceMids, options) {
 
-  ready <- inherits(miceMids$object, "mids") && # We can't do an analysis before imputing
-    options$dependent != "" &&
-    (length(unlist(options$modelTerms)) > 0 || options$interceptTerm)
+  # ready <- inherits(miceMids$object, "mids") && # We can't do an analysis before imputing
+  #   options$dependent != "" &&
+  #   (length(unlist(options$modelTerms)) > 0 || options$interceptTerm)
+
+  ready <- .readyForLinReg(options, miceMids)
 
   # browser() ############################################################################################################
 
-  dataset <- miceMids$object |> complete("all") # For some reason, with.mids won' parse the formula correction. Seems related to the bug I patched in ggmice.
+  impData <- miceMids$object |> mice::complete("all") # For some reason, with.mids won't parse the formula correctly. Seems related to the bug I patched in ggmice.
 
-  modelContainer  <- .linregGetModelContainer(jaspResults, position = 1)
-  model           <- .linregCalcModel(modelContainer, dataset, options, ready)
+  saveRDS(impData, "~/software/jasp/modules/imputation/data/impList.rds")
+
+  modelContainer <- .linregGetModelContainer(jaspResults, position = 1)
+  model          <- .linregCalcModel(modelContainer, impData, options, ready)
 
   if (is.null(modelContainer[["summaryTable"]]))
     jaspRegression:::.linregCreateSummaryTable(modelContainer, model, options, position = 1)
@@ -94,7 +98,7 @@
   #             - Do they correctly adjust for D1, D2, D3?
 
   if (options$coefficientEstimate && is.null(modelContainer[["coeffTable"]]))
-    .linregCreateCoefficientsTable(modelContainer, model, dataset, options, position = 3)
+    .linregCreateCoefficientsTable(modelContainer, model, impData, options, position = 3)
 
   # TODO (KML): Check what we can do about the bootstrapping, partial cor, and collinearity tables
 

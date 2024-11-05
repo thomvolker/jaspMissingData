@@ -57,6 +57,10 @@
 
 #' @export
 pooledLm <- function(formula, data, weights, fType = 1, ...) {
+  
+  saveRDS(formula, "~/software/jasp/modules/imputation/data/formula2.rds")
+  saveRDS(data, "~/software/jasp/modules/imputation/data/impList2.rds")
+  
   if (mice::is.mids(data))
     fits <- with(data, stats::lm(formula = as.formula(formula), weights = weights, ...))
     # fits <- with(data, stats::lm(formula = as.formula(form), weights = weights, ...))
@@ -135,7 +139,7 @@ pooledLmObject <- function(fits,
   else
     pooled$vcov <- with(pooled$coef$pooled, matrix(ubar + b + (b / m), dimnames = list(term, term)))
 
-  ## Include the extra pooled stats we'll need to downstream
+  ## Include the extra pooled stats we'll need downstream
   obj$pooled <- pooled
 
   obj

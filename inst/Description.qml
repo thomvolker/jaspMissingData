@@ -13,6 +13,7 @@ Description
 	license:		"GPL (>= 2)"
 	icon:			"impMice.svg"
 	hasWrappers:	false
+	preloadData:	true
 
 	GroupTitle
 	{
