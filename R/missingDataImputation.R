@@ -21,18 +21,19 @@
 #' @export
 MissingDataImputation <- function(jaspResults, dataset, options) {
 
-  saveRDS(dataset, "~/software/jasp/modules/imputation/data/dataset.rds")
+  # saveRDS(dataset, "~/software/jasp/modules/imputation/data/dataset.rds")
+  # browser()
 
   # Set title
   jaspResults$title <- "Multiple Imputation with MICE"
 
   # Init options: add variables to options to be used in the remainder of the analysis
-  options <- .initImputationOptions(options)
+  options <- .processImputationOptions(options)
 
   # ready <- length(options$variables) > 0
   if (.readyForMi(options)) {
     # read dataset
-    # dataset <- .readData(options)
+    # dataset <- .readData(dataset, options)
     # error checking
     errors <- .errorHandling(dataset, options)
 
@@ -42,7 +43,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     # browser() #########################################################################################################
 
     .initMiceMids(jaspResults)
-    options <- .imputeMissingData(jaspResults[["MiceMids"]], options, dataset)
+    options <- .imputeMissingData(jaspResults[["MiceMids"]], dataset, options)
 
     ## Initialize containers to hold the convergence plots and analysis results:
     # convergencePlots  <- .initConvergencePlots(jaspResults)
@@ -84,13 +85,25 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 ###-Init Functions---------------------------------------------------------------------------------------------------###
 
-.initImputationOptions <- function(options) {
-  # Determine if analysis can be run with user input
+.processImputationOptions <- function(options) {
+
+  # browser()
+
   # Calculate any options common to multiple parts of the analysis
   options$lastMidsUpdate <- Sys.time()
   options$imputedVariables <- ""
   options$fType <- 1
   options$lmFunction <- pooledLm
+
+  # saveRDS(options, "~/software/jasp/modules/imputation/data/options1.rds")
+
+  tmp <- options$imputationTargets
+  options$imputationTargets <- sapply(tmp, "[[", x = "variable")
+  options$imputationMethods <- sapply(tmp, "[[", x = "method")
+  names(options$imputationMethods) <- options$imputationTargets
+
+  # saveRDS(vars, "~/software/jasp/modules/imputation/data/vars.rds")
+  # saveRDS(options, "~/software/jasp/modules/imputation/data/options2.rds")
 
   options
 }
@@ -101,7 +114,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   if(!is.null(jaspResults[["MiceMids"]])) return()
 
   miceMids <- createJaspState()
-  miceMids$dependOn(options = c("variables", "nImps", "nIter", "seed"))
+  miceMids$dependOn(options = c("imputationTargets", "imputationMethods", "nImps", "nIter", "seed"))
 
   jaspResults[["MiceMids"]] <- miceMids
 }
@@ -132,32 +145,79 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   # jaspResults[["AnalysisContainer"]]
 }
 
+###------------------------------------------------------------------------------------------------------------------###
+
+.makeMethodVector <- function(dataset, options) {
+  method        <- rep("", ncol(dataset)) #mice::make.method(dataset)
+  names(method) <- colnames(dataset)
+
+  method[options$imputationTargets] <- options$imputationMethods
+
+  nLevels <- sapply(dataset, function(x) length(unique(na.omit(x))))
+
+  binoms         <- method == "logistic" & nLevels == 2
+  method[binoms] <- "logreg"
+
+  multinoms         <- method == "logistic" & nLevels > 2
+  method[multinoms] <- "polyreg"
+
+  method
+}
+
+###------------------------------------------------------------------------------------------------------------------###
+
+.makePredictorMatrix <- function(dataset, options) {
+  if (options$quickpred) { # Use mice::quickpred() to construct the predictor matrix
+    predMat <- with(options,
+      mice::quickpred(
+        data    = dataset,
+        mincor  = quickpredMincor,
+        minpuc  = quickpredMinpuc,
+        include = quickpredIncludes,
+        exclude = quickpredExcludes,
+        method  = quickpredMethod
+      )
+    )
+
+    return(predMat)
+  }
+
+  ## We're not using quickpred, so just do the boring thing:
+  mice::make.predictorMatrix(dataset)
+}
+
 ###-Output Functions-------------------------------------------------------------------------------------------------###
 
-.imputeMissingData <- function(miceMids, options, dataset) {
+.imputeMissingData <- function(miceMids, dataset, options) {
+
+  methVec <- .makeMethodVector(dataset, options)
+  predMat <- .makePredictorMatrix(dataset, options)
+
+  # saveRDS(method, "~/software/jasp/modules/imputation/data/method.rds")
 
   miceOut <- try(
     with(options,
       mice::mice(
-        # data  = dataset[ , encodeColNames(variables), drop = FALSE],
-        # data  = dataset[variables],
-        data  = dataset,
-        m     = nImp,
-        maxit = nIter,
-        seed  = seed,
-        print = FALSE
+        data            = dataset,
+        m               = nImp,
+        method          = methVec,
+        predictorMatrix = predMat,
+        maxit           = nIter,
+        seed            = seed,
+        print           = FALSE
       )
     )
   )
 
-  saveRDS(dataset, "~/software/jasp/modules/imputation/data/dataset2.rds")
-  saveRDS(miceOut, "~/software/jasp/modules/imputation/data/miceOut.rds")
-  saveRDS(options$variables, "~/software/jasp/modules/imputation/data/variables.rds")
+  # saveRDS(options, "~/software/jasp/modules/imputation/data/options.rds")
+  # saveRDS(dataset, "~/software/jasp/modules/imputation/data/dataset2.rds")
+  # saveRDS(miceOut, "~/software/jasp/modules/imputation/data/miceOut.rds")
+  # saveRDS(options$variables, "~/software/jasp/modules/imputation/data/variables.rds")
 
   if (!inherits(miceOut, "try-error")) {
     # saveRDS(miceOut, "/home/kylelang/software/jasp/modules/imputation/data/miceOut.rds")
-    miceMids$object <- miceOut
-    options$lastMidsUpdate <- Sys.time()
+    miceMids$object          <- miceOut
+    options$lastMidsUpdate   <- Sys.time()
     options$imputedVariables <- (sapply(miceOut$imp, nrow) > 0) |> which() |> names()
   } else {
     stop(
@@ -166,6 +226,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
       miceOut
     )
   }
+
+  # dataset <<- miceOut$data ##############################################################################################
 
   options
 }

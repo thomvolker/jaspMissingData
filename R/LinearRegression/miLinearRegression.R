@@ -80,6 +80,8 @@
   impData <- miceMids$object |> mice::complete("all") # For some reason, with.mids won't parse the formula correctly. Seems related to the bug I patched in ggmice.
 
   saveRDS(impData, "~/software/jasp/modules/imputation/data/impList.rds")
+  saveRDS(options$factors, "~/software/jasp/modules/imputation/data/factors.rds")
+  saveRDS(options$covariates, "~/software/jasp/modules/imputation/data/covariates.rds")
 
   modelContainer <- .linregGetModelContainer(jaspResults, position = 1)
   model          <- .linregCalcModel(modelContainer, impData, options, ready)

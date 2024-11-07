@@ -17,7 +17,13 @@
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-.readyForMi <- function(options) length(options$variables) > 0
+.readyForMi <- function(options) 
+  with(options, 
+    length(imputationTargets) > 0 &&
+    !is.null(nImp) && nImp >= 1 &&
+    !is.null(nIter) && nIter >= 1 &&
+    !is.null(seed)
+  )
 
 ###------------------------------------------------------------------------------------------------------------------###
 
@@ -29,7 +35,7 @@
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-.readData <- function(options) dataset[unlist(options$variables)]
+# .readData <- function(dataset, options) dataset[options$imputationVariables]
 #   vars <- unlist(options$variables)
 #   # Read in the dataset using the built-in functions
 #   if (!is.null(options$groupVar) && options$groupVar != "")
@@ -44,6 +50,6 @@
   .hasErrors(dataset, 
              "run", 
              type = c('observations', 'variance', 'infinity'),
-             all.target = options$variables,
+             all.target = options$imputationTargets,
              observations.amount = '< 2',
              exitAnalysisIfErrors = TRUE)

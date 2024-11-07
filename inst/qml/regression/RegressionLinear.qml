@@ -39,7 +39,12 @@ Section
 	VariablesForm
 	{
 		AvailableVariablesList { name: "analysisVariablesList" }
-		AssignedVariablesList { name: "dependent";	title: qsTr("Dependent Variable");	allowedColumns: ["scale"]; singleVariable: true;		}
+		AssignedVariablesList {
+			name:			"dependent"
+			title:			qsTr("Dependent Variable")
+			allowedColumns:	["scale"]
+			singleVariable:	true
+		}
 		DropDown
 		{
 			name: "method"
@@ -62,16 +67,16 @@ Section
 
 		FactorsForm
 		{
-			id:					factors
+			id:					bob
 			name:				"modelTerms"
 			nested:				nested.checked
 			allowInteraction:	true
 			initNumberFactors:	2
 			baseName:			"model"
 			baseTitle:			"Model"
-			availableVariablesList.source: ['covariates', 'factors']
+			// availableVariablesList.source: "allVariablesList" //['covariates', 'factors']
 			startIndex:			0
-			availableVariablesListName: "availableTerms"
+			// availableVariablesListName: "availableTerms"
 			allowedColumns:		[]
 		}
 
