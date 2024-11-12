@@ -3,11 +3,11 @@ import JASP.Module	1.0
 
 Description
 {
-	name:			"jaspImputation"
-	title:			qsTr("Imputation")
-	description:	qsTr("Impute missing data by means of Multivariate Imputation by Chained Equations (MICE).")
+	name:			"jaspMissingData"
+	title:			qsTr("Missing Data")
+	description:	qsTr("Inspect, impute, and analyze incomplete data.")
 	version:		"0.1.0"
-	author:			"JASP Team and MICE Team"
+	author:			"UU JASP Team and MICE Team"
 	maintainer:		"JASP Team <info@jasp-stats.org>"
 	website:		"https://jasp-stats.org"
 	license:		"GPL (>= 2)"

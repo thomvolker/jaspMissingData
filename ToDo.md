@@ -4,13 +4,13 @@
 
 # Steps
 
-- Add regression analysis to the jaspImputation module
+- Add regression analysis to the jaspMissingData module
 
 # Notes
 
 - For now, we can't have multiple datasets in JASP
 - Keep the imputed stuff in the analysis' object
-- Add analyses to the jaspImputation QML
+- Add analyses to the jaspMissingData QML
 - Depend on jaspRegression
 
 ## Implementation

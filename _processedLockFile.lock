@@ -1628,7 +1628,7 @@
       "RemoteUsername": "jasp-stats",
       "RemoteRepo": "jaspAnova",
       "RemoteRef": "master",
-      "RemoteSha": "fa23220a76a39c2aadc4e651aefb3a5d20f72ebc",
+      "RemoteSha": "dbaec21fbaf94b270b6d9adf340a4897c69ef72f",
       "Requirements": [
         "BayesFactor",
         "KernSmooth",
@@ -1653,7 +1653,7 @@
         "stringi",
         "stringr"
       ],
-      "Hash": "d928a9514813e57b05e4aaa2210bbf72"
+      "Hash": "a3f974fa987694ddf5850b0fcf20ac5f"
     },
     "jaspBase": {
       "Package": "jaspBase",
@@ -1704,7 +1704,7 @@
       "RemoteUsername": "jasp-stats",
       "RemoteRepo": "jaspDescriptives",
       "RemoteRef": "master",
-      "RemoteSha": "97604523d13e767224a181fd1464f3db09c32c44",
+      "RemoteSha": "b8913d4786fdfc3e0cddcd24ff7470fd69463735",
       "Requirements": [
         "dplyr",
         "flexplot",
@@ -1718,7 +1718,7 @@
         "jaspGraphs",
         "jaspTTests"
       ],
-      "Hash": "4090ac9833e1f75c1d7b5dbb13f014dd"
+      "Hash": "a47cda04506ffa44ed3d03e9d3fbf149"
     },
     "jaspGraphs": {
       "Package": "jaspGraphs",
@@ -1744,6 +1744,15 @@
       ],
       "Hash": "1c2cee4f3fb7e8f80ef26b0b2a75cbec"
     },
+    "jaspMissingData": {
+      "Package": "jaspMissingData",
+      "Version": "0.1.0_Local_JASP",
+      "Source": "Local",
+      "RemoteType": "local",
+      "RemoteUrl": "/home/kylelang/software/jasp/modules/imputation/jaspMissingData",
+      "Cacheable": true,
+      "Hash": "9bd7ca7456ef7a1e5493cefb7db6dedf"
+    },
     "jaspRegression": {
       "Package": "jaspRegression",
       "Version": "0.19.2",
@@ -1753,7 +1762,7 @@
       "RemoteUsername": "jasp-stats",
       "RemoteRepo": "jaspRegression",
       "RemoteRef": "master",
-      "RemoteSha": "2c8deac63f447e66ae5bf269d1e05f38a7d8d316",
+      "RemoteSha": "f6c7097b5d27db00908582b33f1b54b249b6553d",
       "Requirements": [
         "BAS",
         "MASS",
@@ -1779,7 +1788,7 @@
         "purrr",
         "statmod"
       ],
-      "Hash": "ac1512552621149ce757794845c4f8d4"
+      "Hash": "7ecd2e861b50fd1abc29e0658ecdf660"
     },
     "jaspTTests": {
       "Package": "jaspTTests",
@@ -1790,7 +1799,7 @@
       "RemoteUsername": "jasp-stats",
       "RemoteRepo": "jaspTTests",
       "RemoteRef": "master",
-      "RemoteSha": "c97471be183f5e7696e9d09a4a2ee208e5bfbf82",
+      "RemoteSha": "1024ca4c8e96448ce6da8ae178aabcf89e50f2f8",
       "Requirements": [
         "BayesFactor",
         "car",
@@ -1801,7 +1810,7 @@
         "plotrix",
         "plyr"
       ],
-      "Hash": "f51940643d67e5d439ef6c4b96ea057f"
+      "Hash": "b8f38472ef994e040b2c3750c83b1e29"
     },
     "jaspTools": {
       "Package": "jaspTools",
