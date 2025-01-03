@@ -17,13 +17,14 @@
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-.readyForMi <- function(options) 
-  with(options, 
+.readyForMi <- function(options) {
+  with(options,
     length(imputationTargets) > 0 &&
     !is.null(nImp) && nImp >= 1 &&
     !is.null(nIter) && nIter >= 1 &&
     !is.null(seed)
   )
+}
 
 ###------------------------------------------------------------------------------------------------------------------###
 
@@ -47,8 +48,8 @@
 ###------------------------------------------------------------------------------------------------------------------###
 
 .errorHandling <- function(dataset, options)
-  .hasErrors(dataset, 
-             "run", 
+  .hasErrors(dataset,
+             "run",
              type = c('observations', 'variance', 'infinity'),
              all.target = options$imputationTargets,
              observations.amount = '< 2',
