@@ -19,10 +19,10 @@
 
 #' Multiply impute missing data with MICE
 #' @export
-MissingDataImputation <- function(jaspResults, dataset, options) {
 
-  # saveRDS(dataset, "~/software/jasp/modules/imputation/data/dataset.rds")
-  # browser()
+# TODO: own logging
+
+MissingDataImputation <- function(jaspResults, dataset, options) {
 
   # Set title
   jaspResults$title <- "Multiple Imputation with MICE"
@@ -30,8 +30,9 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   # Init options: add variables to options to be used in the remainder of the analysis
   options <- .processImputationOptions(options)
 
-  # ready <- length(options$variables) > 0
-  if (.readyForMi(options)) {
+  if (TRUE) {
+  #if (.readyForMi(options)) {
+
     # read dataset
     # dataset <- .readData(dataset, options)
     # error checking
@@ -40,16 +41,14 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     # Output containers, tables, and plots based on the results. These functions should not return anything!
     # .createImputationContainer(jaspResults, options)
 
-    # browser() #########################################################################################################
-
     .initMiceMids(jaspResults)
     options <- .imputeMissingData(jaspResults[["MiceMids"]], dataset, options)
 
     ## Initialize containers to hold the convergence plots and analysis results:
-    # convergencePlots  <- .initConvergencePlots(jaspResults)
-    # analysisContainer <- .initAnalysisContainer(jaspResults)
-    .initConvergencePlots(jaspResults)
-    .initAnalysisContainer(jaspResults)
+    convergencePlots  <- .initConvergencePlots(jaspResults)
+    analysisContainer <- .initAnalysisContainer(jaspResults)
+    #.initConvergencePlots(jaspResults)
+    #.initAnalysisContainer(jaspResults)
 
     if (options$tracePlot)
       .createTracePlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]])
@@ -76,10 +75,10 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 # .createImputationContainer <- function(jaspResults, options) {
 #   if (!is.null(jaspResults[["ImputationContainer"]])) return()
-#   
+#
 #   imputationContainer <- createJaspContainer("Missing Data Imputation")
 #   imputationContainer$dependOn(options = c("variables", "groupVar", "nImps", "nIter", "seed"))
-#   
+#
 #   jaspResults[["ImputationContainer"]] <- imputationContainer
 # }
 
@@ -87,17 +86,13 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 .processImputationOptions <- function(options) {
 
-  # browser()
-
   # Calculate any options common to multiple parts of the analysis
   options$lastMidsUpdate <- Sys.time()
   options$imputedVariables <- ""
   options$fType <- 1
   options$lmFunction <- pooledLm
 
-  # saveRDS(options, "~/software/jasp/modules/imputation/data/options1.rds")
-
-  tmp <- options$imputationTargets
+  tmp <- options$imputationVariables
   options$imputationTargets <- sapply(tmp, "[[", x = "variable")
   options$imputationMethods <- sapply(tmp, "[[", x = "method")
   names(options$imputationMethods) <- options$imputationTargets
@@ -128,7 +123,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   convergencePlots$dependOn(options = "lastMidsUpdate")
 
   jaspResults[["ConvergencePlots"]] <- convergencePlots
-  
+
   # jaspResults[["ConvergencePlots"]]
 }
 
@@ -136,20 +131,20 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 .initAnalysisContainer <- function(jaspResults) {
   if(!is.null(jaspResults[["AnalysisContainer"]])) return()
-  
+
   analysisContainer <- createJaspContainer(title = "Analyses")
   analysisContainer$dependOn(options = "lastMidsUpdate")
 
   jaspResults[["AnalysisContainer"]] <- analysisContainer
-  
+
   # jaspResults[["AnalysisContainer"]]
 }
 
 ###------------------------------------------------------------------------------------------------------------------###
 
 .makeMethodVector <- function(dataset, options) {
-  method        <- rep("", ncol(dataset)) #mice::make.method(dataset)
-  names(method) <- colnames(dataset)
+
+  method <- mice::make.method(dataset, defaultMethod = "")
 
   method[options$imputationTargets] <- options$imputationMethods
 
@@ -167,6 +162,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 ###------------------------------------------------------------------------------------------------------------------###
 
 .makePredictorMatrix <- function(dataset, options) {
+
   if (options$quickpred) { # Use mice::quickpred() to construct the predictor matrix
     predMat <- with(options,
       mice::quickpred(
@@ -235,15 +231,19 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 ###------------------------------------------------------------------------------------------------------------------###
 
 .createTracePlot <- function(convergencePlots, miceMids) {
-  # if (!is.null(jaspResults[["tracePlot"]])) return()
+
+  #if (!is.null(jaspResults[["tracePlot"]])) return()
 
   tracePlot <- createJaspPlot(title = "Trace Plot", height = 320, width = 480)
-  # tracePlot$dependOn(options = "variables")
-  
-  # Bind plot to jaspResults via the convergencePlots container:
+  tracePlot$dependOn(options = "variables")
+
   convergencePlots[["TracePlot"]] <- tracePlot
 
+
   tracePlot$plotObject <- miceMids$object |> ggmice::plot_trace()
+
+  # Bind plot to jaspResults via the convergencePlots container:
+  # convergencePlots[["TracePlot"]] <- tracePlot$plotObject
 }
 
 ###------------------------------------------------------------------------------------------------------------------###
