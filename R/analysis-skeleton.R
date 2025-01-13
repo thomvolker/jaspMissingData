@@ -92,10 +92,10 @@ MockAnalysis <- function(jaspResults, dataset, options) {
 # Output functions ----
 .mockContainerMain <- function(jaspResults, options, mockResults) {
   if (!is.null(jaspResults[["mockMainContainer"]])) return()
-  
+
   mainContainer <- createJaspContainer("Model fit tables")
   mainContainer$dependOnOptions(c("variables", "someotheroption"))
-  
+
   jaspResults[["mockMainContainer"]] <- mainContainer
 }
 
@@ -124,21 +124,21 @@ MockAnalysis <- function(jaspResults, dataset, options) {
 
 .mockTableSthElse <- function(jaspResults, options, mockResults) {
   if (!is.null(jaspResults[["mockMainContainer"]][["mockTable2"]])) return()
-  
+
   # Below is one way of creating a table
   mockTable2 <- createJaspTable(title = "Mock Table Something Else")
   mockTable2$dependOnOptions(c("variables", "someotheroption"))
-  
+
   # Bind table to jaspResults
   jaspResults[["mockMainContainer"]][["mockTable2"]] <- mockTable2
-  
+
   # Add column info
   mockTable2$addColumnInfo(name = "hallo", title = "Hallo", type = "string")
   mockTable2$addColumnInfo(name = "doei",  title = "Doei",  type = "string")
-  
+
   # Calculate some data from results
   mockSummary <- summary(mockResults$someObject)
-  
+
   # Add data per column. Calculations are allowed here too!
   mockTable2[["hallo"]] <- ifelse(mockSummary$hallo > 1, "Hallo!", "Hello!")
   mockTable2[["doei"]]  <- mockSummary$doei^2
@@ -149,7 +149,7 @@ MockAnalysis <- function(jaspResults, dataset, options) {
 
   mockPlot <- createJaspPlot(title = "Mock Plot", height = 320, width = 480)
   mockPlot$dependOnOptions(c("variables", "someotheroption"))
-  
+
   # Bind plot to jaspResults
   jaspResults[["mockPlot"]] <- mockPlot
 
