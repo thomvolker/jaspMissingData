@@ -41,10 +41,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     options <- .imputeMissingData(jaspResults[["MiceMids"]], dataset, options)
 
     ## Initialize containers to hold the convergence plots and analysis results:
-    convergencePlots  <- .initConvergencePlots(jaspResults)
-    analysisContainer <- .initAnalysisContainer(jaspResults)
-    #.initConvergencePlots(jaspResults)
-    #.initAnalysisContainer(jaspResults)
+    .initConvergencePlots(jaspResults)
+    .initAnalysisContainer(jaspResults)
 
     if (options$tracePlot)
       .createTracePlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]])
