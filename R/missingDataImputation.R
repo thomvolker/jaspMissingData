@@ -30,12 +30,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   # Init options: add variables to options to be used in the remainder of the analysis
   options <- .processImputationOptions(options)
 
-  if (TRUE) {
-  #if (.readyForMi(options)) {
+  if (.readyForMi(options)) {
 
-    # read dataset
-    # dataset <- .readData(dataset, options)
-    # error checking
     errors <- .errorHandling(dataset, options)
 
     # Output containers, tables, and plots based on the results. These functions should not return anything!
@@ -235,7 +231,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   #if (!is.null(jaspResults[["tracePlot"]])) return()
 
   tracePlot <- createJaspPlot(title = "Trace Plot", height = 320, width = 480)
-  tracePlot$dependOn(options = "variables")
+  tracePlot$dependOn(options = c("imputationTargets", "imputationMethods", "nImps", "nIter", "seed"))
 
   convergencePlots[["TracePlot"]] <- tracePlot
 
@@ -254,7 +250,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
   for(v in options$imputedVariables) {
     densityPlot <- createJaspPlot(title = v, height = 320, width = 480)
-    # densityPlot$dependOn(options = "variables")
+    densityPlot$dependOn(options = c("imputationTargets", "imputationMethods", "nImps", "nIter", "seed"))
 
     ## Bind the density plot for variable 'v' to the 'densityPlots' container in jaspResults
     convergencePlots[["DensityPlots"]][[v]] <- densityPlot
