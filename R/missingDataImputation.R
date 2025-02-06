@@ -109,7 +109,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   if(!is.null(jaspResults[["MiceMids"]])) return()
 
   miceMids <- createJaspState()
-  miceMids$dependOn(options = c("imputationTargets", "imputationMethods", "visitsequence", "nImps", "nIter", "seed"))
+  miceMids$dependOn(options = c("imputationTargets", "imputationMethods", "passive", "visitSequence", "nImps", "nIter", "seed"))
 
   jaspResults[["MiceMids"]] <- miceMids
 }
@@ -159,6 +159,31 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   method
 }
 
+.processPassive <- function(dataset, options, methodVector) {
+
+  if (options$passive) {
+    passiveMeths <- strsplit(options$passiveImputation, "\n")[[1]]
+    passiveMat <- sapply(passiveMeths, function(x) {
+      splitted <- gsub("\\s", "", x) |> strsplit("=")
+      var <- encodeColNames(splitted[[1]][1])
+      eq  <- encodeColNames(splitted[[1]][2])
+      c(var = var, eq = eq)
+    }) |> as.matrix()
+    matchMethod <- sapply(passiveMat[1,], \(x) which(names(methodVector) %in% x))
+
+    saveRDS(list(input = options$passiveImputation,
+                 impVars = options$imputationVariables,
+                 methVec = methodVector,
+                 passiveMat = passiveMat,
+                 matchMethod = matchMethod),
+            "C:/Users/5868777/surfdrive/Documents/jasp-dev/jaspMissingData/jasp-analysis/passive.rds")
+
+    methodVector[matchMethod] <- paste0("~I(", passiveMat[2,], ")")
+  }
+
+  methodVector
+}
+
 ###------------------------------------------------------------------------------------------------------------------###
 
 .makePredictorMatrix <- function(dataset, options) {
@@ -187,9 +212,9 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 .imputeMissingData <- function(miceMids, dataset, options) {
 
   methVec <- .makeMethodVector(dataset, options)
+  methVec <- .processPassive(dataset, options, methVec)
   predMat <- .makePredictorMatrix(dataset, options)
 
-  # saveRDS(method, "~/software/jasp/modules/imputation/data/method.rds")
 
   miceOut <- try(
     with(options,
@@ -198,7 +223,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
         m               = nImp,
         method          = methVec,
         predictorMatrix = predMat,
-        visitSequence   = visitsequence,
+        visitSequence   = visitSequence,
         maxit           = nIter,
         seed            = seed,
         print           = FALSE
