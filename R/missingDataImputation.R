@@ -54,11 +54,6 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
       .runRegression(jaspResults, jaspResults[["MiceMids"]], options)
 
-      # miFits <- .estimateRegressionModels(jaspResults[["MiceMids"]], options)
-      # saveRDS(miFits, "/home/kylelang/software/jasp/modules/imputation/data/miFits.rds")
-      # modelContainer <- .poolRegressionEstimates(jaspResults, miFits, options, offset = 0)
-      # .populateRegressionResults(jaspResults, modelContainer, options)
-      # .runRegression(jaspResults[["AnalysisContainer"]], jaspResults[["MiceMids"]], options)
     }
   }
 
@@ -97,9 +92,6 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
   names(options$imputationMethods) <- options$imputationTargets
 
-  # saveRDS(vars, "~/software/jasp/modules/imputation/data/vars.rds")
-  # saveRDS(options, "~/software/jasp/modules/imputation/data/options2.rds")
-
   options
 }
 
@@ -109,7 +101,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   if(!is.null(jaspResults[["MiceMids"]])) return()
 
   miceMids <- createJaspState()
-  miceMids$dependOn(options = c("imputationTargets", "imputationMethods", "passive", "visitSequence", "nImps", "nIter", "seed"))
+  miceMids$dependOn(options = c("imputationTargets", "imputationMethods", "passiveImputation", "visitSequence", "nImps", "nIter", "seed"))
 
   jaspResults[["MiceMids"]] <- miceMids
 }
@@ -159,29 +151,34 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   method
 }
 
-.processPassive <- function(dataset, options, methodVector) {
+.processPassive <- function(dataset, options, methodVector, predictorMatrix) {
 
-  if (options$passive) {
+  if (options$passive & options$passiveImputation != "") {
+
+    decoded <- decodeColNames(names(methodVector))
+    encoded <- names(methodVector)
+    methnm  <- names(methodVector)
+
     passiveMeths <- strsplit(options$passiveImputation, "\n")[[1]]
     passiveMat <- sapply(passiveMeths, function(x) {
+      for (i in seq_along(decoded)) {
+        x <- paste0("\\b", decoded[i], "\\b") |> gsub(replacement = encoded[i], x = x)
+      }
       splitted <- gsub("\\s", "", x) |> strsplit("=")
-      var <- encodeColNames(splitted[[1]][1])
-      eq  <- encodeColNames(splitted[[1]][2])
-      c(var = var, eq = eq)
+      c(var = splitted[[1]][1], eq = splitted[[1]][2])
     }) |> as.matrix()
-    matchMethod <- sapply(passiveMat[1,], \(x) which(names(methodVector) %in% x))
 
-    saveRDS(list(input = options$passiveImputation,
-                 impVars = options$imputationVariables,
-                 methVec = methodVector,
-                 passiveMat = passiveMat,
-                 matchMethod = matchMethod),
-            "C:/Users/5868777/surfdrive/Documents/jasp-dev/jaspMissingData/jasp-analysis/passive.rds")
-
+    matchMethod <- sapply(passiveMat[1,], \(x) which(methnm %in% x))
     methodVector[matchMethod] <- paste0("~I(", passiveMat[2,], ")")
-  }
 
-  methodVector
+    for (i in seq_len(ncol(predictorMatrix))) {
+      if (i %in% matchMethod) {
+        setzero <- sapply(methnm, \(nm) grepl(nm, methodVector[i]))
+        predictorMatrix[which(setzero), i] <- 0
+      }
+    }
+  }
+  list(meth = methodVector, pred = predictorMatrix)
 }
 
 ###------------------------------------------------------------------------------------------------------------------###
@@ -212,9 +209,10 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 .imputeMissingData <- function(miceMids, dataset, options) {
 
   methVec <- .makeMethodVector(dataset, options)
-  methVec <- .processPassive(dataset, options, methVec)
   predMat <- .makePredictorMatrix(dataset, options)
-
+  passive <- .processPassive(dataset, options, methVec, predMat)
+  methVec <- passive$meth
+  predMat <- passive$pred
 
   miceOut <- try(
     with(options,
@@ -231,13 +229,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     )
   )
 
-  # saveRDS(options, "~/software/jasp/modules/imputation/data/options.rds")
-  # saveRDS(dataset, "~/software/jasp/modules/imputation/data/dataset2.rds")
-  # saveRDS(miceOut, "~/software/jasp/modules/imputation/data/miceOut.rds")
-  # saveRDS(options$variables, "~/software/jasp/modules/imputation/data/variables.rds")
-
   if (!inherits(miceOut, "try-error")) {
-    # saveRDS(miceOut, "/home/kylelang/software/jasp/modules/imputation/data/miceOut.rds")
     miceMids$object          <- miceOut
     options$lastMidsUpdate   <- Sys.time()
     nonnull <- !sapply(miceOut$imp, is.null)
