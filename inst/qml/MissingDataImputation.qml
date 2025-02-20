@@ -96,6 +96,22 @@ Form
 		}
 
 	}
+		CheckBox
+		{
+			name:		"passive"
+			label:		qsTr("Use passive imputation")
+			id:			passive
+			checked:	false
+		}
+	TextArea
+	{
+	  visible:	passive.checked
+		id: passiveImputation
+		name: "passiveImputation"
+		textType: JASP.PassiveImputation
+		showLineNumber: true
+	}
+
 
 	Group
 	{
@@ -189,7 +205,7 @@ Form
 
 	DropDown
 	{
-		name: "visitsequence"
+		name: "visitSequence"
 
 		label: qsTr("Visit Sequence")
 		values: [
