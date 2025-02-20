@@ -151,33 +151,35 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   method
 }
 
+.parsePassiveImpMethod <- function(x, encoded, decoded) {
+  for (i in seq_along(decoded)) {
+    x <- paste0("\\b", decoded[i], "\\b") |> gsub(replacement = encoded[i], x = x)
+  }
+  splitted <- gsub("\\s", "", x) |> strsplit("=")
+  c(var = splitted[[1]][1], eq = splitted[[1]][2])
+}
+
+
 .processPassive <- function(dataset, options, methodVector, predictorMatrix) {
 
-  if (options$passive & options$passiveImputation != "") {
+  encodedMethNames <- names(methodVector)
+  decodedMethNames <- jaspBase::decodeColNames(encodedMethNames)
 
-    decoded <- decodeColNames(names(methodVector))
-    encoded <- names(methodVector)
-    methnm  <- names(methodVector)
+  passiveMethVec <- strsplit(options$passiveImputation, "\n")[[1]]
 
-    passiveMeths <- strsplit(options$passiveImputation, "\n")[[1]]
-    passiveMat <- sapply(passiveMeths, function(x) {
-      for (i in seq_along(decoded)) {
-        x <- paste0("\\b", decoded[i], "\\b") |> gsub(replacement = encoded[i], x = x)
-      }
-      splitted <- gsub("\\s", "", x) |> strsplit("=")
-      c(var = splitted[[1]][1], eq = splitted[[1]][2])
-    }) |> as.matrix()
+  passiveMat <- sapply(passiveMethVec,
+                       .parsePassiveImpMethod,
+                       encoded = encodedMethNames,
+                       decoded = decodedMethNames)
 
-    matchMethod <- sapply(passiveMat[1,], \(x) which(methnm %in% x))
-    methodVector[matchMethod] <- paste0("~I(", passiveMat[2,], ")")
+  matchMethod <- sapply(passiveMat[1,], grep, x = encodedMethNames)
+  methodVector[matchMethod] <- paste0("~I(", passiveMat[2,], ")")
 
-    for (i in seq_len(ncol(predictorMatrix))) {
-      if (i %in% matchMethod) {
-        setzero <- sapply(methnm, \(nm) grepl(nm, methodVector[i]))
-        predictorMatrix[which(setzero), i] <- 0
-      }
-    }
+  for (i in matchMethod) {
+    setZero <- sapply(encodedMethNames, grepl, x = methodVector[i])
+    predictorMatrix[setZero, i] <- 0
   }
+
   list(meth = methodVector, pred = predictorMatrix)
 }
 
@@ -210,9 +212,12 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
   methVec <- .makeMethodVector(dataset, options)
   predMat <- .makePredictorMatrix(dataset, options)
-  passive <- .processPassive(dataset, options, methVec, predMat)
-  methVec <- passive$meth
-  predMat <- passive$pred
+
+  if (options$passive & options$passiveImputation != "") {
+    passive <- .processPassive(dataset, options, methVec, predMat)
+    methVec <- passive$meth
+    predMat <- passive$pred
+  }
 
   miceOut <- try(
     with(options,
