@@ -22,8 +22,7 @@
     length(imputationTargets) > 0 &&
     !is.null(nImp) && nImp >= 1 &&
     !is.null(nIter) && nIter >= 1 &&
-    !is.null(seed) &&
-    ((passive && passiveImputation != "") | !passive)
+    !is.null(seed)
   )
 }
 
