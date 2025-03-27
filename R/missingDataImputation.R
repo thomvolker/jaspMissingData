@@ -233,9 +233,14 @@ predMatToModels <- function(predictorMatrix, variables) {
   }
 
   otherVars <- setdiff(c(encodedMethNames), c(fullModelsVars, nullModelsVars))
-  otherPreds <- lapply(otherVars, function(x) names(which(predictorMatrix[x,] != 0)))
-  otherPreds <- sapply(otherPreds, function(x) paste0(x, collapse = " + "))
-  otherModsVec <- paste0(otherVars, "~", otherPreds)
+  if (length(otherVars) > 0) {
+    otherPreds <- lapply(otherVars, function(x) names(which(predictorMatrix[x,] != 0)))
+    otherPreds <- sapply(otherPreds, function(x) paste0(x, collapse = " + "))
+    otherModsVec <- paste0(otherVars, "~", otherPreds)
+  } else {
+    otherModsVec <- NULL
+  }
+
 
   impMods <- sapply(c(fullModelsVec, nullModelsVec, otherModsVec), as.formula)
   impMods
