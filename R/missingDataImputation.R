@@ -151,11 +151,13 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   method
 }
 
-.parsePassiveImpMethod <- function(x, encoded, decoded) {
+### Passive imputation ----------------------------------------------------------------------------------------------###
+
+.parseCharacterFormula <- function(x, encoded, decoded) {
   for (i in seq_along(decoded)) {
     x <- paste0("\\b", decoded[i], "\\b") |> gsub(replacement = encoded[i], x = x)
   }
-  splitted <- gsub("\\s", "", x) |> strsplit("=")
+  splitted <- gsub("\\s", "", x) |> strsplit("=|~")
   c(var = splitted[[1]][1], eq = splitted[[1]][2])
 }
 
@@ -168,7 +170,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   passiveMethVec <- strsplit(options$passiveImputation, "\n")[[1]]
 
   passiveMat <- sapply(passiveMethVec,
-                       .parsePassiveImpMethod,
+                       .parseCharacterFormula,
                        encoded = encodedMethNames,
                        decoded = decodedMethNames)
 
@@ -181,6 +183,62 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   }
 
   list(meth = methodVector, pred = predictorMatrix)
+}
+
+### Text-specified imputation models ---------------------------------------------------------------------------------###
+
+predMatToModels <- function(predictorMatrix, variables) {
+  sapply(variables, function(x) {
+    paste0(x, "~", paste0(names(which(predictorMatrix[x,]!=0)), collapse = "+"))
+  })
+}
+
+
+
+.processImpModel <- function(dataset, options, predictorMatrix) {
+
+  encodedMethNames <- rownames(predictorMatrix)
+  decodedMethNames <- jaspBase::decodeColNames(encodedMethNames)
+
+  if (options$changeFullModel != "") {
+    fullModels <- strsplit(options$changeFullModel, "\n")[[1]]
+    fullModelsMat <- sapply(fullModels,
+                            .parseCharacterFormula,
+                            encoded = encodedMethNames,
+                            decoded = decodedMethNames)
+
+    fullModelsVars <- fullModelsMat[1,]
+    fullModelsVec  <- paste0(fullModelsMat[1,], "~ . +", fullModels[2,])
+  } else {
+    fullModelsVars <- NULL
+    fullModelsVec  <- NULL
+  }
+
+  if (options$changeNullModel != "") {
+    nullModels <- strsplit(options$changeNullModel, "\n")[[1]]
+    nullModelsMat <- sapply(nullModels,
+                            .parseCharacterFormula,
+                            encoded = encodedMethNames,
+                            decoded = decodedMethNames)
+
+    nullModelsVars <- nullModelsMat[1,]
+    nullModelsVec  <- paste0(nullModelsMat[1,], "~", nullModelsMat[2,])
+  } else {
+    nullModelsVars <- NULL
+    nullModelsVec  <- NULL
+  }
+
+  if (any(fullModelsVars %in% nullModelsVars)) {
+    stop("You cannot specify imputation models starting from the full and the empty model simultaneously.")
+  }
+
+  otherVars <- setdiff(c(encodedMethNames), c(fullModelsVars, nullModelsVars))
+  otherPreds <- lapply(otherVars, function(x) names(which(predictorMatrix[x,] != 0)))
+  otherPreds <- sapply(otherPreds, function(x) paste0(x, collapse = " + "))
+  otherModsVec <- paste0(otherVars, "~", otherPreds)
+
+  impMods <- sapply(c(fullModelsVec, nullModelsVec, otherModsVec), as.formula)
+  impMods
 }
 
 ###------------------------------------------------------------------------------------------------------------------###
@@ -219,13 +277,15 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     predMat <- passive$pred
   }
 
+  impMods <- .processImpModel(dataset, options, predMat)
+
   miceOut <- try(
     with(options,
       mice::mice(
         data            = dataset,
         m               = nImp,
         method          = methVec,
-        predictorMatrix = predMat,
+        formulas        = impMods,
         visitSequence   = visitSequence,
         maxit           = nIter,
         seed            = seed,

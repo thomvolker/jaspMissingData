@@ -96,6 +96,10 @@ Form
 		}
 
 	}
+	Group
+	{
+	  title: qsTr("Passive imputation")
+
 		CheckBox
 		{
 			name:		"passive"
@@ -103,15 +107,15 @@ Form
 			id:			passive
 			checked:	false
 		}
-	TextArea
-	{
-	  visible:	passive.checked
-		id: passiveImputation
-		name: "passiveImputation"
-		textType: JASP.PassiveImputation
-		showLineNumber: true
+	  TextArea
+	  {
+	    visible:	passive.checked
+		  id: passiveImputation
+		  name: "passiveImputation"
+		  textType: JASP.PassiveImputation
+		  showLineNumber: true
+	  }
 	}
-
 
 	Group
 	{
@@ -269,6 +273,33 @@ Form
 		}
 
 	}
+	Section
+	{
+	  id: predictorSpec
+	  title: qsTr("Imputation model specification")
+	  DropDown
+	  {
+	    id: changePredOption
+	    name: "changePredOption"
+		  label: qsTr("Change imputation predictors")
+		  values: [
+		    { label: qsTr("Add/remove predictors"),		value: "addpred"},
+			  { label: qsTr("Fully flexible specification"),	value: "flex"}
+		  ]
+	  }
+	  TextArea {
+	    id: changeNullModel
+	    name: "changeNullModel"
+	    placeholderText: qsTr("Add terms to an intercept-only model.")
+	    visible: changePredOption.currentValue === "flex"
+	  }
+	  TextArea {
+	    id: changeFullModel
+	    name: "changeFullModel"
+	    placeholderText: qsTr("Add terms to a full model (containing all main-effects).")
+	    visible: changePredOption.currentValue === "flex"
+	  }
+}
 
 	Section
 	{
