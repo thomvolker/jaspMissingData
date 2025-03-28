@@ -164,6 +164,9 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 .processPassive <- function(dataset, options, methodVector, predictorMatrix) {
 
+  #TODO: passive imputation might run before the other imputation models in the sequence.
+  # it might be wise to let it run after all other imputation models have been run. I now
+  # filed an issue on the mice github page.
   encodedMethNames <- names(methodVector)
   decodedMethNames <- jaspBase::decodeColNames(encodedMethNames)
 
@@ -243,7 +246,7 @@ predMatToModels <- function(predictorMatrix, variables) {
 
 
   impMods <- sapply(c(fullModelsVec, nullModelsVec, otherModsVec), as.formula)
-  impMods
+  impMods[match(encodedMethNames, sapply(impMods, as.character)[2,])]
 }
 
 ###------------------------------------------------------------------------------------------------------------------###
