@@ -277,7 +277,7 @@ Form
 	    name: "changePredOption"
 		  label: qsTr("Change imputation predictors")
 		  values: [
-		    { label: qsTr("Add/remove predictors"),		value: "addpred"},
+//		    { label: qsTr("Add/remove predictors"),		value: "addpred"},
 			  { label: qsTr("Fully flexible specification"),	value: "flex"}
 		  ]
 	  }
