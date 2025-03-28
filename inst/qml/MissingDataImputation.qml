@@ -96,26 +96,6 @@ Form
 		}
 
 	}
-	Group
-	{
-	  title: qsTr("Passive imputation")
-
-		CheckBox
-		{
-			name:		"passive"
-			label:		qsTr("Use passive imputation")
-			id:			passive
-			checked:	false
-		}
-	  TextArea
-	  {
-	    visible:	passive.checked
-		  id: passiveImputation
-		  name: "passiveImputation"
-		  textType: JASP.PassiveImputation
-		  showLineNumber: true
-	  }
-	}
 
 	Group
 	{
@@ -272,6 +252,20 @@ Form
 			checked:	false
 		}
 
+	}
+	Section
+	{
+	  id: passiveImp
+	  title: qsTr("Passive imputation")
+
+	  TextArea
+	  {
+		  id: passiveImputation
+		  name: "passiveImputation"
+		  textType: JASP.PassiveImputation
+		  showLineNumber: true
+		  placeholderText: "Passive imputation models can be specified as:\na=b+(2*c)^2"
+	  }
 	}
 	Section
 	{

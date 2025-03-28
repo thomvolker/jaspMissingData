@@ -279,7 +279,7 @@ predMatToModels <- function(predictorMatrix, variables) {
   methVec <- .makeMethodVector(dataset, options)
   predMat <- .makePredictorMatrix(dataset, options)
 
-  if (options$passive & options$passiveImputation != "") {
+  if (options$passiveImputation != "") {
     passive <- .processPassive(dataset, options, methVec, predMat)
     methVec <- passive$meth
     predMat <- passive$pred
