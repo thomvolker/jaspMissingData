@@ -190,14 +190,6 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 ### Text-specified imputation models ---------------------------------------------------------------------------------###
 
-predMatToModels <- function(predictorMatrix, variables) {
-  sapply(variables, function(x) {
-    paste0(x, "~", paste0(names(which(predictorMatrix[x,]!=0)), collapse = "+"))
-  })
-}
-
-
-
 .processImpModel <- function(dataset, options, predictorMatrix) {
 
   encodedMethNames <- rownames(predictorMatrix)
