@@ -203,7 +203,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
                             decoded = decodedMethNames)
 
     fullModelsVars <- fullModelsMat[1,]
-    fullModelsVec  <- paste0(fullModelsMat[1,], "~ . +", fullModels[2,])
+    firstchar <- substr(fullModelsMat[2,], 1, 1)
+    fullModelsVec  <- paste0(fullModelsVars, "~ .", ifelse(firstchar == "-", "", "+"), fullModelsMat[2,])
   } else {
     fullModelsVars <- NULL
     fullModelsVec  <- NULL
@@ -217,7 +218,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
                             decoded = decodedMethNames)
 
     nullModelsVars <- nullModelsMat[1,]
-    nullModelsVec  <- paste0(nullModelsMat[1,], "~", nullModelsMat[2,])
+    nullModelsVec  <- paste0(nullModelsVars, "~", nullModelsMat[2,])
   } else {
     nullModelsVars <- NULL
     nullModelsVec  <- NULL
