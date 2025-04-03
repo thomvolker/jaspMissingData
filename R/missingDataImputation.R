@@ -101,7 +101,17 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   if(!is.null(jaspResults[["MiceMids"]])) return()
 
   miceMids <- createJaspState()
-  miceMids$dependOn(options = c("imputationTargets", "imputationMethods", "passiveImputation", "visitSequence", "nImps", "nIter", "seed"))
+  miceMids$dependOn(options = c(
+    "imputationTargets",
+    "imputationMethods",
+    "passiveImputation",
+    "changeFullModel",
+    "changeNullModel",
+    "visitSequence",
+    "nImps",
+    "nIter",
+    "seed")
+  )
 
   jaspResults[["MiceMids"]] <- miceMids
 }
