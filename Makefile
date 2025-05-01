@@ -3,7 +3,19 @@
 BUILD_DIR := builds
 PKG_NAME := jaspMissingData
 
-all: build
+all: renv
+
+## Build and install the package via renv:
+renv:
+	Rscript ./renv_build.R
+
+## Update the packages in the renv project library:
+update:
+	Rscript -e "renv::update()"
+
+## Update the state of the lockfile to match the renv library state:
+snapshot:
+	Rscript -e "renv::snapshot()"
 
 ## Build the package:
 build: R/* roxygen | $(BUILD_DIR)
@@ -12,10 +24,6 @@ build: R/* roxygen | $(BUILD_DIR)
 ## Run unit tests:
 test: tests/* roxygen
 	R CMD check ./
-
-## Build and install the package via renv:
-renv:
-	Rscript ./renv_build.R
 
 ## Update the NAMESPACE and help files:
 roxygen:
