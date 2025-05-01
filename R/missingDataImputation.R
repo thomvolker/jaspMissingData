@@ -219,20 +219,38 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     predMat <- passive$pred
   }
 
-  miceOut <- try(
-    with(options,
-      mice::mice(
-        data            = dataset,
-        m               = nImp,
-        method          = methVec,
-        predictorMatrix = predMat,
-        visitSequence   = visitSequence,
-        maxit           = nIter,
-        seed            = seed,
-        print           = FALSE
+  updateMids <- FALSE
+  if (!is.null(miceMids$object)) {
+    currentMiceMids <- miceMids$object
+    currentIter     <- currentMiceMids$iteration
+    savedIter       <- if (is.null(currentMiceMids$chainMean)) 0 else dim(currentMiceMids$chainMean)[1]
+    wantedIter      <- options$nIter
+    addIter         <- max(0, wantedIter - currentIter)
+
+    nActiveVars <- sum(!startsWith(methVec, "passive") & methVec != "")
+    nChains <- if (is.null(currentMiceMids$chainMean)) 0 else dim(currentMiceMids$chainMean)[3]
+
+    updateMids <- addIter > 0 && options$seed == currentMiceMids$seed && savedIter >= nChains && nChains == nActiveVars
+  }
+
+  if (updateMids) {
+    miceOut <- try(mice::mice.mids(currentMiceMids, maxit = addIter))
+  } else {
+    miceOut <- try(
+      with(options,
+           mice::mice(
+             data            = dataset,
+             m               = nImp,
+             method          = methVec,
+             predictorMatrix = predMat,
+             visitSequence   = visitSequence,
+             maxit           = nIter,
+             seed            = seed,
+             print           = FALSE
+           )
       )
     )
-  )
+  }
 
   if (!inherits(miceOut, "try-error")) {
     miceMids$object          <- miceOut
