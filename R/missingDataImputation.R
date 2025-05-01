@@ -202,54 +202,49 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 .processImpModel <- function(dataset, options, predictorMatrix) {
 
+  formulas <- mice::make.formulas(dataset, predictorMatrix = predictorMatrix)
+
   encodedMethNames <- rownames(predictorMatrix)
   decodedMethNames <- jaspBase::decodeColNames(encodedMethNames)
 
-  if (options$changeFullModel != "") {
-    fullModels <- strsplit(options$changeFullModel, "\n")[[1]]
-    fullModelsMat <- sapply(fullModels,
-                            .parseCharacterFormula,
-                            encoded = encodedMethNames,
-                            decoded = decodedMethNames)
+  fullModelVars <- nullModelVars <- NULL
 
-    fullModelsVars <- fullModelsMat[1,]
-    firstchar <- substr(fullModelsMat[2,], 1, 1)
-    fullModelsVec  <- paste0(fullModelsVars, "~ .", ifelse(firstchar == "-", "", "+"), fullModelsMat[2,])
-  } else {
-    fullModelsVars <- NULL
-    fullModelsVec  <- NULL
+  if (options$changeFullModel != "") {
+    models <- strsplit(options$changeFullModel, "\n")[[1]]
+    modelsMat <- sapply(models,
+                        .parseCharacterFormula,
+                        encoded = encodedMethNames,
+                        decoded = decodedMethNames)
+
+    fullModelVars <- modelsMat[1,]
+
+    for (i in seq_along(fullModelVars)) {
+      y <- modelsMat[1, i]
+      # check whether user wants to add to the full model or subtract from it (or both)
+      addsubtract <- ifelse(substr(modelsMat[2,i], 1, 1) == "-", "", "+")
+      formulas[[y]] <- update(formulas[[y]], paste(". ~ .", addsubtract, modelsMat[2, i]))
+    }
   }
 
   if (options$changeNullModel != "") {
-    nullModels <- strsplit(options$changeNullModel, "\n")[[1]]
-    nullModelsMat <- sapply(nullModels,
-                            .parseCharacterFormula,
-                            encoded = encodedMethNames,
-                            decoded = decodedMethNames)
+    models <- strsplit(options$changeNullModel, "\n")[[1]]
+    modelsMat <- sapply(models,
+                        .parseCharacterFormula,
+                        encoded = encodedMethNames,
+                        decoded = decodedMethNames)
 
-    nullModelsVars <- nullModelsMat[1,]
-    nullModelsVec  <- paste0(nullModelsVars, "~", nullModelsMat[2,])
-  } else {
-    nullModelsVars <- NULL
-    nullModelsVec  <- NULL
+    nullModelVars <- modelsMat[1,]
+
+    if (!is.null(fullModelVars) && any(fullModelVars %in% nullModelVars)) {
+      stop("You cannot specify imputation models starting from the full and the empty model simultaneously.")
+    }
+
+    for (i in seq_along(nullModelVars)) {
+      y <- modelsMat[1, i]
+      formulas[[y]] <- paste(y, modelsMat[2, i], sep = " ~ ") |> as.formula()
+    }
   }
-
-  if (any(fullModelsVars %in% nullModelsVars)) {
-    stop("You cannot specify imputation models starting from the full and the empty model simultaneously.")
-  }
-
-  otherVars <- setdiff(c(encodedMethNames), c(fullModelsVars, nullModelsVars))
-  if (length(otherVars) > 0) {
-    otherPreds <- lapply(otherVars, function(x) names(which(predictorMatrix[x,] != 0)))
-    otherPreds <- sapply(otherPreds, function(x) paste0(x, collapse = " + "))
-    otherModsVec <- paste0(otherVars, "~", otherPreds)
-  } else {
-    otherModsVec <- NULL
-  }
-
-
-  impMods <- sapply(c(fullModelsVec, nullModelsVec, otherModsVec), as.formula)
-  impMods[match(encodedMethNames, sapply(impMods, as.character)[2,])]
+  formulas
 }
 
 ###------------------------------------------------------------------------------------------------------------------###
