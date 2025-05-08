@@ -33,4 +33,4 @@ roxygen:
 $(BUILD_DIR):
 	mkdir $(BUILD_DIR)
 
-.PHONY: $(BUILD_DIR) roxygen renv
+.PHONY: $(BUILD_DIR) roxygen renv update snapshot
