@@ -101,7 +101,17 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   if(!is.null(jaspResults[["MiceMids"]])) return()
 
   miceMids <- createJaspState()
-  miceMids$dependOn(options = c("imputationTargets", "imputationMethods", "passiveImputation", "visitSequence", "nImps", "nIter", "seed"))
+  miceMids$dependOn(options = c(
+    "imputationTargets",
+    "imputationMethods",
+    "passiveImputation",
+    "changeFullModel",
+    "changeNullModel",
+    "visitSequence",
+    "nImps",
+    "nIter",
+    "seed")
+  )
 
   jaspResults[["MiceMids"]] <- miceMids
 }
@@ -151,24 +161,29 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   method
 }
 
-.parsePassiveImpMethod <- function(x, encoded, decoded) {
+### Passive imputation ----------------------------------------------------------------------------------------------###
+
+.parseCharacterFormula <- function(x, encoded, decoded) {
   for (i in seq_along(decoded)) {
     x <- paste0("\\b", decoded[i], "\\b") |> gsub(replacement = encoded[i], x = x)
   }
-  splitted <- gsub("\\s", "", x) |> strsplit("=")
+  splitted <- gsub("\\s", "", x) |> strsplit("=|~")
   c(var = splitted[[1]][1], eq = splitted[[1]][2])
 }
 
 
 .processPassive <- function(dataset, options, methodVector, predictorMatrix) {
 
+  #TODO: passive imputation might run before the other imputation models in the sequence.
+  # it might be wise to let it run after all other imputation models have been run. I now
+  # filed an issue on the mice github page.
   encodedMethNames <- names(methodVector)
   decodedMethNames <- jaspBase::decodeColNames(encodedMethNames)
 
   passiveMethVec <- strsplit(options$passiveImputation, "\n")[[1]]
 
   passiveMat <- sapply(passiveMethVec,
-                       .parsePassiveImpMethod,
+                       .parseCharacterFormula,
                        encoded = encodedMethNames,
                        decoded = decodedMethNames)
 
@@ -181,6 +196,55 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   }
 
   list(meth = methodVector, pred = predictorMatrix)
+}
+
+### Text-specified imputation models ---------------------------------------------------------------------------------###
+
+.processImpModel <- function(dataset, options, predictorMatrix) {
+
+  formulas <- mice::make.formulas(dataset, predictorMatrix = predictorMatrix)
+
+  encodedMethNames <- rownames(predictorMatrix)
+  decodedMethNames <- jaspBase::decodeColNames(encodedMethNames)
+
+  fullModelVars <- nullModelVars <- NULL
+
+  if (options$changeFullModel != "") {
+    models <- strsplit(options$changeFullModel, "\n")[[1]]
+    modelsMat <- sapply(models,
+                        .parseCharacterFormula,
+                        encoded = encodedMethNames,
+                        decoded = decodedMethNames)
+
+    fullModelVars <- modelsMat[1,]
+
+    for (i in seq_along(fullModelVars)) {
+      y <- modelsMat[1, i]
+      # check whether user wants to add to the full model or subtract from it (or both)
+      addsubtract <- ifelse(substr(modelsMat[2,i], 1, 1) == "-", "", "+")
+      formulas[[y]] <- update(formulas[[y]], paste(". ~ .", addsubtract, modelsMat[2, i]))
+    }
+  }
+
+  if (options$changeNullModel != "") {
+    models <- strsplit(options$changeNullModel, "\n")[[1]]
+    modelsMat <- sapply(models,
+                        .parseCharacterFormula,
+                        encoded = encodedMethNames,
+                        decoded = decodedMethNames)
+
+    nullModelVars <- modelsMat[1,]
+
+    if (!is.null(fullModelVars) && any(fullModelVars %in% nullModelVars)) {
+      stop("You cannot specify imputation models starting from the full and the empty model simultaneously.")
+    }
+
+    for (i in seq_along(nullModelVars)) {
+      y <- modelsMat[1, i]
+      formulas[[y]] <- paste(y, modelsMat[2, i], sep = " ~ ") |> as.formula()
+    }
+  }
+  formulas
 }
 
 ###------------------------------------------------------------------------------------------------------------------###
@@ -213,7 +277,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   methVec <- .makeMethodVector(dataset, options)
   predMat <- .makePredictorMatrix(dataset, options)
 
-  if (options$passive & options$passiveImputation != "") {
+  if (options$passiveImputation != "") {
     passive <- .processPassive(dataset, options, methVec, predMat)
     methVec <- passive$meth
     predMat <- passive$pred
@@ -236,13 +300,15 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   if (updateMids) {
     miceOut <- try(mice::mice.mids(currentMiceMids, maxit = addIter))
   } else {
+    impMods <- .processImpModel(dataset, options, predMat)
+    
     miceOut <- try(
       with(options,
            mice::mice(
              data            = dataset,
              m               = nImp,
              method          = methVec,
-             predictorMatrix = predMat,
+             formulas        = impMods,
              visitSequence   = visitSequence,
              maxit           = nIter,
              seed            = seed,
