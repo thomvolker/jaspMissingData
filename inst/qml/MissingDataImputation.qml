@@ -104,7 +104,7 @@ Form
 
 		IntegerField
 		{
-			name:			"nImp"
+			name:			"nImps"
 			defaultValue:	5
 			label:			qsTr("Number of Imputation")
 			min:			1
@@ -112,7 +112,7 @@ Form
 
 		IntegerField
 		{
-			name:			"nIter"
+			name:			"nIters"
 			defaultValue:	10
 			label:			qsTr("Number of Iterations")
 			min:			1
@@ -193,9 +193,9 @@ Form
 
 		label: qsTr("Visit Sequence")
 		values: [
-			{ label: qsTr("Top to Bottom"), value: "roman"},
-			{ label: qsTr("Bottom to Top"),	value: "arabic"},
-			{ label: qsTr("Monotone"),	value: "monotone"},
+			{ label: qsTr("Top to Bottom"),		value: "roman"		},
+			{ label: qsTr("Bottom to Top"),		value: "arabic"		},
+			{ label: qsTr("Monotone"),			value: "monotone"	},
 			{ label: qsTr("Reverse Monotone"),	value: "revmonotone"}
 		]
 	}
@@ -253,47 +253,55 @@ Form
 		}
 
 	}
-	Section
-	{
-	  id: passiveImp
-	  title: qsTr("Passive imputation")
 
-	  TextArea
-	  {
-		  id: passiveImputation
-		  name: "passiveImputation"
-		  textType: JASP.PassiveImputation
-		  showLineNumber: true
-		  placeholderText: "Passive imputation models can be specified as:\na=b+(2*c)^2"
-	  }
-	}
 	Section
 	{
-	  id: predictorSpec
-	  title: qsTr("Imputation model specification")
-	  DropDown
-	  {
-	    id: changePredOption
-	    name: "changePredOption"
-		  label: qsTr("Change imputation predictors")
-		  values: [
-//		    { label: qsTr("Add/remove predictors"),		value: "addpred"},
-			  { label: qsTr("Fully flexible specification"),	value: "flex"}
-		  ]
-	  }
-	  TextArea {
-	    id: changeNullModel
-	    name: "changeNullModel"
-	    placeholderText: qsTr("Add terms to an intercept-only model.")
-	    visible: changePredOption.currentValue === "flex"
-	  }
-	  TextArea {
-	    id: changeFullModel
-	    name: "changeFullModel"
-	    placeholderText: qsTr("Add terms to a full model (containing all main-effects).")
-	    visible: changePredOption.currentValue === "flex"
-	  }
-}
+
+		id:		passiveImp
+		title:	qsTr("Passive imputation")
+
+		TextArea
+		{
+			id:				passiveImputation
+			name:				"passiveImputation"
+			textType:			JASP.PassiveImputation
+			showLineNumber:	true
+			placeholderText:	"Passive imputation models can be specified as:\na=b+(2*c)^2"
+		}
+
+	}
+
+	Section
+	{
+
+		id:		predictorSpec
+		title:	qsTr("Imputation model specification")
+
+		DropDown
+		{
+			id:			changePredOption
+			name:		"changePredOption"
+			label:	qsTr("Change imputation predictors")
+			values:	[
+				{ label: qsTr("Fully flexible specification"),	value: "flex"}
+			]
+		}
+
+		TextArea {
+			id:					changeNullModel
+			name:				"changeNullModel"
+			placeholderText:	qsTr("Add terms to an intercept-only model.")
+			visible:			changePredOption.currentValue === "flex"
+		}
+
+		TextArea {
+			id:					changeFullModel
+			name:				"changeFullModel"
+			placeholderText:	qsTr("Add terms to a full model (containing all main-effects).")
+			visible:			changePredOption.currentValue === "flex"
+		}
+
+	}
 
 	Section
 	{
@@ -330,9 +338,9 @@ Form
 					{ label: qsTr("Stepwise"),	value: "stepwise"}
 				]
 			}
-			AssignedVariablesList { name: "covariates";	title: qsTr("Covariates");				allowedColumns: ["scale"];   minNumericLevels: 2					}
-			AssignedVariablesList { name: "factors";	title: qsTr("Factors");					allowedColumns: ["nominal"]; minLevels: 2}
-			AssignedVariablesList { name: "weights";	title: qsTr("WLS Weights (optional)");	allowedColumns: ["scale"];   singleVariable: true			}
+			AssignedVariablesList { name: "covariates";	title: qsTr("Covariates");				allowedColumns: ["scale"];		minNumericLevels: 2	}
+			AssignedVariablesList { name: "factors";	title: qsTr("Factors");					allowedColumns: ["nominal"];	minLevels: 2		}
+			AssignedVariablesList { name: "weights";	title: qsTr("WLS Weights (optional)");	allowedColumns: ["scale"];		singleVariable: true}
 		}
 
 		Section

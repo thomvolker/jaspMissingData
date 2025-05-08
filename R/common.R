@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024 Utrecht University
+# Copyright (C) 2025 Utrecht University
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@
 .readyForMi <- function(options) {
   with(options,
     length(imputationTargets) > 0 &&
-    !is.null(nImp) && nImp >= 1 &&
-    !is.null(nIter) && nIter >= 1 &&
+    !is.null(nImps) && nImps >= 1 &&
+    !is.null(nIters) && nIters >= 1 &&
     !is.null(seed)
   )
 }
