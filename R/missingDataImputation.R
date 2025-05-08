@@ -146,7 +146,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 .makeMethodVector <- function(dataset, options) {
 
-  method <- mice::make.method(dataset, defaultMethod = "")
+  method <- mice::make.method(dataset, defaultMethod = rep("", 4))
 
   method[options$imputationTargets] <- options$imputationMethods
 
