@@ -174,7 +174,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 .processPassive <- function(dataset, options, methodVector, predictorMatrix) {
 
-  #TODO: passive imputation might run before the other imputation models in the sequence.
+  # TODO: passive imputation might run before the other imputation models in the sequence.
   # it might be wise to let it run after all other imputation models have been run. I now
   # filed an issue on the mice github page.
   encodedMethNames <- names(methodVector)
@@ -186,6 +186,12 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
                        .parseCharacterFormula,
                        encoded = encodedMethNames,
                        decoded = decodedMethNames)
+
+  varsExist <- match(passiveMat[1,], encodedMethNames)
+  if (any(is.na(varsExist))) {
+    stop("The following variables in your passive imputation string do not exist in the data:\n",
+         paste(passiveMat[1, is.na(varsExist)], collapse = ", "))
+  }
 
   matchMethod <- sapply(passiveMat[1,], grep, x = encodedMethNames)
   methodVector[matchMethod] <- paste0("~I(", passiveMat[2,], ")")
