@@ -262,10 +262,10 @@ Form
 
 		TextArea
 		{
-			id:				passiveImputation
+			id:					passiveImputation
 			name:				"passiveImputation"
 			textType:			JASP.PassiveImputation
-			showLineNumber:	true
+			showLineNumber:		true
 			placeholderText:	"Passive imputation models can be specified as:\na=b+(2*c)^2"
 		}
 
@@ -279,11 +279,11 @@ Form
 
 		DropDown
 		{
-			id:			changePredOption
-			name:		"changePredOption"
+			id:		changePredOption
+			name:	"changePredOption"
 			label:	qsTr("Change imputation predictors")
 			values:	[
-				{ label: qsTr("Fully flexible specification"),	value: "flex"}
+				{ label: qsTr("Fully flexible specification"),	value: "flex" }
 			]
 		}
 

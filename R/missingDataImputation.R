@@ -123,7 +123,17 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   if(!is.null(jaspResults[["ConvergencePlots"]])) return()
 
   convergencePlots <- createJaspContainer(title = "Convergence Plots")
-  convergencePlots$dependOn(options = "lastMidsUpdate")
+  convergencePlots$dependOn(options = c(
+    "imputationTargets",
+    "imputationMethods",
+    "passiveImputation",
+    "changeFullModel",
+    "changeNullModel",
+    "visitSequence",
+    "nImps",
+    "nIters",
+    "seed")
+  )
 
   jaspResults[["ConvergencePlots"]] <- convergencePlots
 }
@@ -134,7 +144,17 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   if(!is.null(jaspResults[["AnalysisContainer"]])) return()
 
   analysisContainer <- createJaspContainer(title = "Analyses")
-  analysisContainer$dependOn(options = "lastMidsUpdate")
+  analysisContainer$dependOn(options = c(
+    "imputationTargets",
+    "imputationMethods",
+    "passiveImputation",
+    "changeFullModel",
+    "changeNullModel",
+    "visitSequence",
+    "nImps",
+    "nIters",
+    "seed")
+  )
 
   jaspResults[["AnalysisContainer"]] <- analysisContainer
 }
@@ -295,8 +315,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
       nChains   <- dim(currentMiceMids$chainMean)[3]
     }
 
-    nActiveVars <- sum(!startsWith(methVec, "passive") & methVec != "")
-    updateMids <- addIter > 0 && options$seed == currentMiceMids$seed && savedIter >= nChains && nChains == nActiveVars
+    updateMids <- addIter > 0 && options$seed == currentMiceMids$seed && savedIter >= nChains
   }
 
   if (updateMids) {
