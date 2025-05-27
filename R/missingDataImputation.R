@@ -224,6 +224,11 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
     fullModelVars <- modelsMat[1,]
 
+    if (any(!fullModelVars %in% encodedMethNames)) {
+      stop("The following variables in your full model do not exist in the data:\n",
+           paste(fullModelVars[!fullModelVars %in% encodedMethNames], collapse = ", "))
+    }
+
     for (i in seq_along(fullModelVars)) {
       y <- modelsMat[1, i]
       # check whether user wants to add to the full model or subtract from it (or both)
@@ -243,6 +248,10 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
     if (!is.null(fullModelVars) && any(fullModelVars %in% nullModelVars)) {
       stop("You cannot specify imputation models starting from the full and the empty model simultaneously.")
+    }
+    if (any(!nullModelVars %in% encodedMethNames)) {
+      stop("The following variables in your full model do not exist in the data:\n",
+           paste(nullModelVars[!nullModelVars %in% encodedMethNames], collapse = ", "))
     }
 
     for (i in seq_along(nullModelVars)) {
