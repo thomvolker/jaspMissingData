@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024 Utrecht University
+# Copyright (C) 2025 Utrecht University
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,8 @@
 
 MissingDataImputation <- function(jaspResults, dataset, options) {
 
+  RNGkind(sample.kind = "Rejection") # Force the modern RNG sampler setting
+
   # Set title
   jaspResults$title <- "Multiple Imputation with MICE"
 
@@ -38,7 +40,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     # .createImputationContainer(jaspResults, options)
 
     .initMiceMids(jaspResults)
-    options <- .imputeMissingData(jaspResults[["MiceMids"]], dataset, options)
+    options <- .imputeMissingData(jaspResults[["MiceMids"]], dataset[options$imputationTargets], options)
 
     ## Initialize containers to hold the convergence plots and analysis results:
     .initConvergencePlots(jaspResults)
@@ -66,7 +68,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 #   if (!is.null(jaspResults[["ImputationContainer"]])) return()
 #
 #   imputationContainer <- createJaspContainer("Missing Data Imputation")
-#   imputationContainer$dependOn(options = c("variables", "groupVar", "nImps", "nIter", "seed"))
+#   imputationContainer$dependOn(options = c("variables", "groupVar", "nImps", "nIters", "seed"))
 #
 #   jaspResults[["ImputationContainer"]] <- imputationContainer
 # }
@@ -76,7 +78,6 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 .processImputationOptions <- function(options) {
 
   # Calculate any options common to multiple parts of the analysis
-  options$lastMidsUpdate <- Sys.time()
   options$imputedVariables <- ""
   options$fType <- 1
   options$lmFunction <- pooledLm
@@ -109,7 +110,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     "changeNullModel",
     "visitSequence",
     "nImps",
-    "nIter",
+    "nIters",
     "seed")
   )
 
@@ -122,11 +123,19 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   if(!is.null(jaspResults[["ConvergencePlots"]])) return()
 
   convergencePlots <- createJaspContainer(title = "Convergence Plots")
-  convergencePlots$dependOn(options = "lastMidsUpdate")
+  convergencePlots$dependOn(options = c(
+    "imputationTargets",
+    "imputationMethods",
+    "passiveImputation",
+    "changeFullModel",
+    "changeNullModel",
+    "visitSequence",
+    "nImps",
+    "nIters",
+    "seed")
+  )
 
   jaspResults[["ConvergencePlots"]] <- convergencePlots
-
-  # jaspResults[["ConvergencePlots"]]
 }
 
 ###------------------------------------------------------------------------------------------------------------------###
@@ -135,11 +144,19 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   if(!is.null(jaspResults[["AnalysisContainer"]])) return()
 
   analysisContainer <- createJaspContainer(title = "Analyses")
-  analysisContainer$dependOn(options = "lastMidsUpdate")
+  analysisContainer$dependOn(options = c(
+    "imputationTargets",
+    "imputationMethods",
+    "passiveImputation",
+    "changeFullModel",
+    "changeNullModel",
+    "visitSequence",
+    "nImps",
+    "nIters",
+    "seed")
+  )
 
   jaspResults[["AnalysisContainer"]] <- analysisContainer
-
-  # jaspResults[["AnalysisContainer"]]
 }
 
 ###------------------------------------------------------------------------------------------------------------------###
@@ -171,6 +188,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   c(var = splitted[[1]][1], eq = splitted[[1]][2])
 }
 
+###------------------------------------------------------------------------------------------------------------------###
 
 .processPassive <- function(dataset, options, methodVector, predictorMatrix) {
 
@@ -221,8 +239,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     for (i in seq_along(fullModelVars)) {
       y <- modelsMat[1, i]
       # check whether user wants to add to the full model or subtract from it (or both)
-      addsubtract <- ifelse(substr(modelsMat[2,i], 1, 1) == "-", "", "+")
-      formulas[[y]] <- update(formulas[[y]], paste(". ~ .", addsubtract, modelsMat[2, i]))
+      addSubtract <- ifelse(substr(modelsMat[2,i], 1, 1) == "-", "", "+")
+      formulas[[y]] <- update(formulas[[y]], paste(". ~ .", addSubtract, modelsMat[2, i]))
     }
   }
 
@@ -287,14 +305,17 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   if (!is.null(miceMids$object)) {
     currentMiceMids <- miceMids$object
     currentIter     <- currentMiceMids$iteration
-    savedIter       <- if (is.null(currentMiceMids$chainMean)) 0 else dim(currentMiceMids$chainMean)[1]
-    wantedIter      <- options$nIter
+    wantedIter      <- options$nIters
     addIter         <- max(0, wantedIter - currentIter)
 
-    nActiveVars <- sum(!startsWith(methVec, "passive") & methVec != "")
-    nChains <- if (is.null(currentMiceMids$chainMean)) 0 else dim(currentMiceMids$chainMean)[3]
+    if (is.null(currentMiceMids$chainMean)) {
+      savedIter <- nChains <- 0
+    } else {
+      savedIter <- dim(currentMiceMids$chainMean)[1]
+      nChains   <- dim(currentMiceMids$chainMean)[3]
+    }
 
-    updateMids <- addIter > 0 && options$seed == currentMiceMids$seed && savedIter >= nChains && nChains == nActiveVars
+    updateMids <- addIter > 0 && options$seed == currentMiceMids$seed && savedIter >= nChains
   }
 
   if (updateMids) {
@@ -306,11 +327,11 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
       with(options,
            mice::mice(
              data            = dataset,
-             m               = nImp,
+             m               = nImps,
              method          = methVec,
              formulas        = impMods,
              visitSequence   = visitSequence,
-             maxit           = nIter,
+             maxit           = nIters,
              seed            = seed,
              print           = FALSE
            )
@@ -320,9 +341,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
   if (!inherits(miceOut, "try-error")) {
     miceMids$object          <- miceOut
-    options$lastMidsUpdate   <- Sys.time()
-    nonnull <- !sapply(miceOut$imp, is.null)
-    options$imputedVariables <- (sapply(miceOut$imp[nonnull], nrow) > 0) |> which() |> names()
+    nonNull                  <- !sapply(miceOut$imp, is.null)
+    options$imputedVariables <- (sapply(miceOut$imp[nonNull], nrow) > 0) |> which() |> names()
   } else {
     stop(
       "The mice() function crashed when attempting to impute the missing data.\n",
@@ -331,8 +351,6 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     )
   }
 
-  # dataset <<- miceOut$data ##############################################################################################
-
   options
 }
 
@@ -340,18 +358,12 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 .createTracePlot <- function(convergencePlots, miceMids) {
 
-  #if (!is.null(jaspResults[["tracePlot"]])) return()
-
   tracePlot <- createJaspPlot(title = "Trace Plot", height = 320, width = 480)
-  tracePlot$dependOn(options = c("imputationTargets", "imputationMethods", "nImps", "nIter", "seed"))
+  tracePlot$dependOn(options = c("imputationTargets", "imputationMethods", "nImps", "nIters", "seed"))
 
   convergencePlots[["TracePlot"]] <- tracePlot
 
-
   tracePlot$plotObject <- miceMids$object |> ggmice::plot_trace()
-
-  # Bind plot to jaspResults via the convergencePlots container:
-  # convergencePlots[["TracePlot"]] <- tracePlot$plotObject
 }
 
 ###------------------------------------------------------------------------------------------------------------------###
@@ -362,7 +374,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
   for(v in options$imputedVariables) {
     densityPlot <- createJaspPlot(title = v, height = 320, width = 480)
-    densityPlot$dependOn(options = c("imputationTargets", "imputationMethods", "nImps", "nIter", "seed"))
+    densityPlot$dependOn(options = c("imputationTargets", "imputationMethods", "nImps", "nIters", "seed"))
 
     ## Bind the density plot for variable 'v' to the 'densityPlots' container in jaspResults
     convergencePlots[["DensityPlots"]][[v]] <- densityPlot
