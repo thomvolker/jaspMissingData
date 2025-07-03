@@ -54,3 +54,6 @@ rsconnect/
 
 # Built tar-balls:
 builds/
+
+# Remove local folder with jasp testing stuff
+jasp-analysis/
