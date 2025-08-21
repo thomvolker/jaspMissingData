@@ -254,6 +254,29 @@ Form
 
 	}
 
+	Group
+  {
+
+    title: qsTr('Logged events')
+
+    IntegerField
+    {
+      name: "maxLoggedEvents"
+      label: qsTr("Maximum number of events to display")
+      min: 1
+      max: 1000
+      defaultValue: 10
+      enabled: !printAllLoggedEvents
+    }
+
+    CheckBox
+    {
+      name: "printAllLoggedEvents"
+      label: qsTr("Show all logged events")
+    }
+
+  }
+
 	Section
 	{
 
