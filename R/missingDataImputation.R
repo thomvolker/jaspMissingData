@@ -398,7 +398,6 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     return()
   }
 
-  #maxToShow <- if (options$printAllLoggedEvents) nrow(events) else options$maxLoggedEvents
   maxToShow <- ifelse(options$printAllLoggedEvents, nrow(events), options$maxLoggedEvents)
   nShown <- min(nrow(events), maxToShow)
   for (i in seq_len(nShown)) {
