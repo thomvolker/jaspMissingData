@@ -40,7 +40,9 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     # .createImputationContainer(jaspResults, options)
 
     .initMiceMids(jaspResults)
-    options <- .imputeMissingData(jaspResults[["MiceMids"]], dataset[options$imputationTargets], options)
+    if(is.null(jaspResults[["MiceMids"]]$object)) {
+      options <- .imputeMissingData(jaspResults[["MiceMids"]], dataset[options$imputationTargets], options)
+    }
 
     if (!is.null(jaspResults[["MiceMids"]]$object)) {
       .loggedEventsToTable(jaspResults, options)
