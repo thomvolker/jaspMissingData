@@ -150,7 +150,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     "quickpredMinpuc", 
     "quickpredMethod", 
     "quickpredIncludes", 
-    "quickpredExcluces",
+    "quickpredExcludes",
     "seed")
   )
 
@@ -176,7 +176,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     "quickpredMinpuc", 
     "quickpredMethod", 
     "quickpredIncludes", 
-    "quickpredExcluces",
+    "quickpredExcludes",
     "seed")
   )
 
