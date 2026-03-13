@@ -11,8 +11,9 @@ test_that("A full MI run works.",
       types     = c("scale", "scale", "scale", "scale", "scale", "ordinal", "ordinal", "scale", "nominal")
     )
     options$tracePlot <- TRUE
+    options$densityPlot <- TRUE
 
-    result <- jaspTools::runAnalysis("MissingDataImputation", boys, options)
+    results <- jaspTools::runAnalysis("MissingDataImputation", boys, options, makeTests = TRUE)
 
     imp <- mice::mice(
       data     = boys,
@@ -24,13 +25,41 @@ test_that("A full MI run works.",
       print    = FALSE
     )
 
-    testPlot <- result$state$figures[[1]]$obj
-    testTable <- result$state$other[[1]]$imp$hgt
+	  plotName <- results[["results"]][["ConvergencePlots"]][["collection"]][["ConvergencePlots_TracePlot"]][["data"]]
+	  testPlot <- results[["state"]][["figures"]][[plotName]][["obj"]]
+	  jaspTools::expect_equal_plots(testPlot, "trace-plot")
 
-    jaspTools::expect_equal_plots(
-      testPlot,
-      "convergence"
-    )
+	  plotName <- results[["results"]][["ConvergencePlots"]][["collection"]][["ConvergencePlots_DensityPlots"]][["collection"]][["ConvergencePlots_DensityPlots_bmi"]][["data"]]
+	  testPlot <- results[["state"]][["figures"]][[plotName]][["obj"]]
+	  jaspTools::expect_equal_plots(testPlot, "bmi")
+
+	  plotName <- results[["results"]][["ConvergencePlots"]][["collection"]][["ConvergencePlots_DensityPlots"]][["collection"]][["ConvergencePlots_DensityPlots_gen"]][["data"]]
+	  testPlot <- results[["state"]][["figures"]][[plotName]][["obj"]]
+	  jaspTools::expect_equal_plots(testPlot, "gen")
+
+	  plotName <- results[["results"]][["ConvergencePlots"]][["collection"]][["ConvergencePlots_DensityPlots"]][["collection"]][["ConvergencePlots_DensityPlots_hc"]][["data"]]
+	  testPlot <- results[["state"]][["figures"]][[plotName]][["obj"]]
+	  jaspTools::expect_equal_plots(testPlot, "hc")
+
+	  plotName <- results[["results"]][["ConvergencePlots"]][["collection"]][["ConvergencePlots_DensityPlots"]][["collection"]][["ConvergencePlots_DensityPlots_hgt"]][["data"]]
+	  testPlot <- results[["state"]][["figures"]][[plotName]][["obj"]]
+	  jaspTools::expect_equal_plots(testPlot, "hgt")
+
+	  plotName <- results[["results"]][["ConvergencePlots"]][["collection"]][["ConvergencePlots_DensityPlots"]][["collection"]][["ConvergencePlots_DensityPlots_phb"]][["data"]]
+	  testPlot <- results[["state"]][["figures"]][[plotName]][["obj"]]
+	  jaspTools::expect_equal_plots(testPlot, "phb")
+
+	  plotName <- results[["results"]][["ConvergencePlots"]][["collection"]][["ConvergencePlots_DensityPlots"]][["collection"]][["ConvergencePlots_DensityPlots_reg"]][["data"]]
+	  testPlot <- results[["state"]][["figures"]][[plotName]][["obj"]]
+	  jaspTools::expect_equal_plots(testPlot, "reg")
+
+	  plotName <- results[["results"]][["ConvergencePlots"]][["collection"]][["ConvergencePlots_DensityPlots"]][["collection"]][["ConvergencePlots_DensityPlots_tv"]][["data"]]
+	  testPlot <- results[["state"]][["figures"]][[plotName]][["obj"]]
+	  jaspTools::expect_equal_plots(testPlot, "tv")
+
+	  plotName <- results[["results"]][["ConvergencePlots"]][["collection"]][["ConvergencePlots_DensityPlots"]][["collection"]][["ConvergencePlots_DensityPlots_wgt"]][["data"]]
+	  testPlot <- results[["state"]][["figures"]][[plotName]][["obj"]]
+	  jaspTools::expect_equal_plots(testPlot, "wgt")
 
     jaspTools::expect_equal_tables(
       testTable,

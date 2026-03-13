@@ -40,8 +40,11 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     # .createImputationContainer(jaspResults, options)
 
     .initMiceMids(jaspResults)
-    if(is.null(jaspResults[["MiceMids"]]$object)) {
-      options <- .imputeMissingData(jaspResults[["MiceMids"]], dataset[options$imputationTargets], options)
+
+    miceState <- jaspResults[["MiceMids"]]
+
+    if(is.null(miceState$object)) {
+      .imputeMissingData(jaspResults[["MiceMids"]], dataset[options$imputationTargets], options)
     }
 
     if (!is.null(jaspResults[["MiceMids"]]$object)) {
@@ -109,14 +112,19 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
   miceMids <- jaspBase::createJaspState()
   miceMids$dependOn(options = c(
-    "imputationTargets",
-    "imputationMethods",
+    "imputationVariables",
     "passiveImputation",
     "changeFullModel",
     "changeNullModel",
     "visitSequence",
     "nImps",
     "nIters",
+    "quickpred", 
+    "quickpredMincor", 
+    "quickpredMinpuc", 
+    "quickpredMethod", 
+    "quickpredIncludes", 
+    "quickpredExcluces",
     "seed")
   )
 
@@ -130,14 +138,19 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
   convergencePlots <- createJaspContainer(title = "Convergence Plots")
   convergencePlots$dependOn(options = c(
-    "imputationTargets",
-    "imputationMethods",
+    "imputationVariables",
     "passiveImputation",
     "changeFullModel",
     "changeNullModel",
     "visitSequence",
     "nImps",
     "nIters",
+    "quickpred", 
+    "quickpredMincor", 
+    "quickpredMinpuc", 
+    "quickpredMethod", 
+    "quickpredIncludes", 
+    "quickpredExcluces",
     "seed")
   )
 
@@ -151,14 +164,19 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
   analysisContainer <- createJaspContainer(title = "Analyses")
   analysisContainer$dependOn(options = c(
-    "imputationTargets",
-    "imputationMethods",
+    "imputationVariables",
     "passiveImputation",
     "changeFullModel",
     "changeNullModel",
     "visitSequence",
     "nImps",
     "nIters",
+    "quickpred", 
+    "quickpredMincor", 
+    "quickpredMinpuc", 
+    "quickpredMethod", 
+    "quickpredIncludes", 
+    "quickpredExcluces",
     "seed")
   )
 
@@ -362,8 +380,6 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
   if (!inherits(miceOut, "try-error")) {
     miceMids$object          <- miceOut
-    nonNull                  <- !sapply(miceOut$imp, is.null)
-    options$imputedVariables <- (sapply(miceOut$imp[nonNull], nrow) > 0) |> which() |> names()
   } else {
     stop(
       "The mice() function crashed when attempting to impute the missing data.\n",
@@ -371,8 +387,6 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
       miceOut
     )
   }
-
-  options
 }
 
 ###------------------------------------------------------------------------------------------------------------------###
@@ -384,7 +398,24 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
   if (is.null(jaspResults[["LoggedEventsTable"]])) {
     table <- createJaspTable("Logged events")
-    table$dependOn(c("method", "nImps", "nIter", "seed", "printAllLoggedEvents", "maxLoggedEvents", "passive", "passiveImputation", "quickpred", "imputationVariables"))
+    table$dependOn(options = c(
+      "imputationVariables",
+      "passiveImputation",
+      "changeFullModel",
+      "changeNullModel",
+      "visitSequence",
+      "nImps",
+      "nIters",
+      "quickpred", 
+      "quickpredMincor", 
+      "quickpredMinpuc", 
+      "quickpredMethod", 
+      "quickpredIncludes", 
+      "quickpredExcluces",
+      "seed",
+      "printAllLoggedEvents", 
+      "maxLoggedEvents")
+    )
     table$addColumnInfo(name = "Iteration", title = "Iteration", type = "integer")
     table$addColumnInfo(name = "Imputation", title = "Imputation", type = "integer")
     table$addColumnInfo(name = "Variable", title = "Imputed variable", type = "string")
@@ -424,7 +455,6 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 .createTracePlot <- function(convergencePlots, miceMids) {
 
   tracePlot <- createJaspPlot(title = "Trace Plot", height = 320, width = 480)
-  tracePlot$dependOn(options = c("imputationTargets", "imputationMethods", "nImps", "nIters", "seed"))
 
   convergencePlots[["TracePlot"]] <- tracePlot
 
@@ -437,9 +467,11 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
   convergencePlots[["DensityPlots"]] <- jaspBase::createJaspContainer("Density Plots")
 
-  for(v in options$imputedVariables) {
+  nonNull <- !sapply(miceMids$object$imp, is.null)
+  imputedVariables <- (sapply(miceMids$object$imp[nonNull], nrow) > 0) |> which() |> names()
+  
+  for(v in imputedVariables) {
     densityPlot <- createJaspPlot(title = v, height = 320, width = 480)
-    densityPlot$dependOn(options = c("imputationTargets", "imputationMethods", "nImps", "nIters", "seed"))
 
     ## Bind the density plot for variable 'v' to the 'densityPlots' container in jaspResults
     convergencePlots[["DensityPlots"]][[v]] <- densityPlot
