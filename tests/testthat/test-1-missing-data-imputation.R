@@ -15,16 +15,6 @@ test_that("A full MI run works.",
 
     results <- jaspTools::runAnalysis("MissingDataImputation", boys, options, makeTests = TRUE)
 
-    imp <- mice::mice(
-      data     = boys,
-      m        = options$nImps,
-      maxit    = options$nIters,
-      method   = impMethods,
-      formulas = mice::make.formulas(boys),
-      seed     = options$seed,
-      print    = FALSE
-    )
-
 	  plotName <- results[["results"]][["ConvergencePlots"]][["collection"]][["ConvergencePlots_TracePlot"]][["data"]]
 	  testPlot <- results[["state"]][["figures"]][[plotName]][["obj"]]
 	  jaspTools::expect_equal_plots(testPlot, "trace-plot")
@@ -62,7 +52,7 @@ test_that("A full MI run works.",
 	  jaspTools::expect_equal_plots(testPlot, "wgt")
 
     jaspTools::expect_equal_tables(
-      testTable,
+      results[["state"]][["other"]][[1]][["imp"]][["hgt"]],
       list(60.6, 91.1, 78, 78.7, 86.5, 78, 78.5, 69.8, 78.5, 76.5, 81.1,
         76.5, 84, 91.6, 80, 81, 84.5, 111.1, 148.1, 186, 60, 80, 74.2,
         91.2, 80, 80, 64, 87.5, 85, 86.5, 94.2, 64, 84.5, 82.5, 80,
