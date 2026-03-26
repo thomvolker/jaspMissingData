@@ -829,7 +829,7 @@ RegressionLinearInternal <- function(jaspResults, dataset = NULL, options) {
   # else
   #   weights <- rep(1, length(dataset[[dependent]]))
   
-  weights <- rep(1, nrow(mice::boys))
+  weights <- rep(1, nrow(dataset[[1]]))
 
   # TODO (KML): Figure out how to assign the weights when 'dataset' is a list of mids object (without touchting too much of the jaspRegression code).
 
