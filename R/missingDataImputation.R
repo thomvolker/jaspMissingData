@@ -41,9 +41,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
     .initMiceMids(jaspResults)
 
-    miceState <- jaspResults[["MiceMids"]]
-
-    if(is.null(miceState$object)) {
+    if(is.null(jaspResults[["MiceMids"]]$object)) {
       .imputeMissingData(jaspResults[["MiceMids"]], dataset[options$imputationTargets], options)
     }
 
@@ -55,9 +53,9 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     .initConvergencePlots(jaspResults)
     .initAnalysisContainer(jaspResults)
 
-    if (options$tracePlot)
+    if (options$tracePlot && is.null(jaspResults[["ConvergencePlots"]][["TracePlot"]]))
       .createTracePlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]])
-    if (options$densityPlot)
+    if (options$densityPlot && is.null(jaspResults[["ConvergencePlots"]][["DensityPlots"]]))
       .createDensityPlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]], options)
 
     if (options$runLinearRegression) {
@@ -71,16 +69,24 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   return()
 }
 
-###------------------------------------------------------------------------------------------------------------------###
+###-Dependency-lists-------------------------------------------------------------------------------------------###
 
-# .createImputationContainer <- function(jaspResults, options) {
-#   if (!is.null(jaspResults[["ImputationContainer"]])) return()
-#
-#   imputationContainer <- createJaspContainer("Missing Data Imputation")
-#   imputationContainer$dependOn(options = c("variables", "groupVar", "nImps", "nIters", "seed"))
-#
-#   jaspResults[["ImputationContainer"]] <- imputationContainer
-# }
+imputationDependencies <- c(
+  "imputationVariables",
+  "passiveImputation",
+  "changeFullModel",
+  "changeNullModel",
+  "visitSequence",
+  "nImps",
+  "nIters",
+  "quickpred", 
+  "quickpredMincor", 
+  "quickpredMinpuc", 
+  "quickpredMethod", 
+  "quickpredIncludes", 
+  "quickpredExcludes",
+  "seed"
+)
 
 ###-Init Functions---------------------------------------------------------------------------------------------------###
 
@@ -111,22 +117,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   if(!is.null(jaspResults[["MiceMids"]])) return()
 
   miceMids <- jaspBase::createJaspState()
-  miceMids$dependOn(options = c(
-    "imputationVariables",
-    "passiveImputation",
-    "changeFullModel",
-    "changeNullModel",
-    "visitSequence",
-    "nImps",
-    "nIters",
-    "quickpred", 
-    "quickpredMincor", 
-    "quickpredMinpuc", 
-    "quickpredMethod", 
-    "quickpredIncludes", 
-    "quickpredExcludes",
-    "seed")
-  )
+  miceMids$dependOn(imputationDependencies)
 
   jaspResults[["MiceMids"]] <- miceMids
 }
@@ -137,21 +128,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   if(!is.null(jaspResults[["ConvergencePlots"]])) return()
 
   convergencePlots <- createJaspContainer(title = "Convergence Plots")
-  convergencePlots$dependOn(options = c(
-    "imputationVariables",
-    "passiveImputation",
-    "changeFullModel",
-    "changeNullModel",
-    "visitSequence",
-    "nImps",
-    "nIters",
-    "quickpred", 
-    "quickpredMincor", 
-    "quickpredMinpuc", 
-    "quickpredMethod", 
-    "quickpredIncludes", 
-    "quickpredExcludes",
-    "seed")
+  convergencePlots$dependOn(
+    options = c(imputationDependencies, "tracePlot", "densityPlot")
   )
 
   jaspResults[["ConvergencePlots"]] <- convergencePlots
@@ -163,21 +141,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   if(!is.null(jaspResults[["AnalysisContainer"]])) return()
 
   analysisContainer <- createJaspContainer(title = "Analyses")
-  analysisContainer$dependOn(options = c(
-    "imputationVariables",
-    "passiveImputation",
-    "changeFullModel",
-    "changeNullModel",
-    "visitSequence",
-    "nImps",
-    "nIters",
-    "quickpred", 
-    "quickpredMincor", 
-    "quickpredMinpuc", 
-    "quickpredMethod", 
-    "quickpredIncludes", 
-    "quickpredExcludes",
-    "seed")
+  analysisContainer$dependOn(options = c(imputationDependencies) # TODO: add regression qml options here
   )
 
   jaspResults[["AnalysisContainer"]] <- analysisContainer
@@ -398,24 +362,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
   if (is.null(jaspResults[["LoggedEventsTable"]])) {
     table <- createJaspTable("Logged events")
-    table$dependOn(options = c(
-      "imputationVariables",
-      "passiveImputation",
-      "changeFullModel",
-      "changeNullModel",
-      "visitSequence",
-      "nImps",
-      "nIters",
-      "quickpred", 
-      "quickpredMincor", 
-      "quickpredMinpuc", 
-      "quickpredMethod", 
-      "quickpredIncludes", 
-      "quickpredExcludes",
-      "seed",
-      "printAllLoggedEvents", 
-      "maxLoggedEvents")
-    )
+    table$dependOn(options = c(imputationDependencies, "printAllLoggedEvents", "maxLoggedEvents"))
+    
     table$addColumnInfo(name = "Iteration", title = "Iteration", type = "integer")
     table$addColumnInfo(name = "Imputation", title = "Imputation", type = "integer")
     table$addColumnInfo(name = "Variable", title = "Imputed variable", type = "string")
