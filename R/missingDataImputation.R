@@ -39,7 +39,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     # Output containers, tables, and plots based on the results. These functions should not return anything!
     # .createImputationContainer(jaspResults, options)
 
-    .initMiceMids(jaspResults)
+    .initMiceMids(jaspResults, imputationDependencies)
 
     if(is.null(jaspResults[["MiceMids"]]$object)) {
       .imputeMissingData(jaspResults[["MiceMids"]], dataset[options$imputationTargets], options)
@@ -50,8 +50,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     }
 
     ## Initialize containers to hold the convergence plots and analysis results:
-    .initConvergencePlots(jaspResults)
-    .initAnalysisContainer(jaspResults)
+    .initConvergencePlots(jaspResults, imputationDependencies)
+    .initAnalysisContainer(jaspResults, imputationDependencies)
 
     if (options$tracePlot && is.null(jaspResults[["ConvergencePlots"]][["TracePlot"]]))
       .createTracePlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]])
@@ -113,7 +113,7 @@ imputationDependencies <- c(
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-.initMiceMids <- function(jaspResults) {
+.initMiceMids <- function(jaspResults, imputationDependencies) {
   if(!is.null(jaspResults[["MiceMids"]])) return()
 
   miceMids <- jaspBase::createJaspState()
@@ -124,7 +124,7 @@ imputationDependencies <- c(
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-.initConvergencePlots <- function(jaspResults) {
+.initConvergencePlots <- function(jaspResults, imputationDependencies) {
   if(!is.null(jaspResults[["ConvergencePlots"]])) return()
 
   convergencePlots <- createJaspContainer(title = "Convergence Plots")
@@ -137,7 +137,7 @@ imputationDependencies <- c(
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-.initAnalysisContainer <- function(jaspResults) {
+.initAnalysisContainer <- function(jaspResults, imputationDependencies) {
   if(!is.null(jaspResults[["AnalysisContainer"]])) return()
 
   analysisContainer <- createJaspContainer(title = "Analyses")
