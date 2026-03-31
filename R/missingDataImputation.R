@@ -32,6 +32,23 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   # Init options: add variables to options to be used in the remainder of the analysis
   options <- .processImputationOptions(options)
 
+  imputationDependencies <- c(
+    "imputationVariables",
+    "passiveImputation",
+    "changeFullModel",
+    "changeNullModel",
+    "visitSequence",
+    "nImps",
+    "nIters",
+    "quickpred", 
+    "quickpredMincor", 
+    "quickpredMinpuc", 
+    "quickpredMethod", 
+    "quickpredIncludes", 
+    "quickpredExcludes",
+    "seed"
+  )
+
   if (.readyForMi(options)) {
 
     errors <- .errorHandling(dataset, options)
@@ -46,7 +63,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     }
 
     if (!is.null(jaspResults[["MiceMids"]]$object)) {
-      .loggedEventsToTable(jaspResults, options)
+      .loggedEventsToTable(jaspResults, options, imputationDependencies)
     }
 
     ## Initialize containers to hold the convergence plots and analysis results:
@@ -69,24 +86,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   return()
 }
 
-###-Dependency-lists-------------------------------------------------------------------------------------------###
 
-imputationDependencies <- c(
-  "imputationVariables",
-  "passiveImputation",
-  "changeFullModel",
-  "changeNullModel",
-  "visitSequence",
-  "nImps",
-  "nIters",
-  "quickpred", 
-  "quickpredMincor", 
-  "quickpredMinpuc", 
-  "quickpredMethod", 
-  "quickpredIncludes", 
-  "quickpredExcludes",
-  "seed"
-)
 
 ###-Init Functions---------------------------------------------------------------------------------------------------###
 
@@ -355,7 +355,7 @@ imputationDependencies <- c(
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-.loggedEventsToTable <- function(jaspResults, options) {
+.loggedEventsToTable <- function(jaspResults, options, imputationDependencies = imputationDependencies) {
   miceMids <- jaspResults[["MiceMids"]]
   miceOut <- miceMids$object
   events <- miceOut$loggedEvents
