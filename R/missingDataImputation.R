@@ -61,10 +61,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     if(is.null(jaspResults[["MiceMids"]]$object)) {
       .imputeMissingData(jaspResults[["MiceMids"]], dataset[options$imputationTargets], options)
     }
-
-    if (!is.null(jaspResults[["MiceMids"]]$object)) {
-      .loggedEventsToTable(jaspResults, options, imputationDependencies)
-    }
+    
+    .loggedEventsToTable(jaspResults, options, imputationDependencies)
 
     ## Initialize containers to hold the convergence plots and analysis results:
     .initConvergencePlots(jaspResults, imputationDependencies)
@@ -360,41 +358,42 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   miceOut <- miceMids$object
   events <- miceOut$loggedEvents
 
-  if (is.null(jaspResults[["LoggedEventsTable"]])) {
-    table <- createJaspTable("Logged events")
-    table$dependOn(options = c(imputationDependencies, "printAllLoggedEvents", "maxLoggedEvents"))
-    
-    table$addColumnInfo(name = "Iteration", title = "Iteration", type = "integer")
-    table$addColumnInfo(name = "Imputation", title = "Imputation", type = "integer")
-    table$addColumnInfo(name = "Variable", title = "Imputed variable", type = "string")
-    table$addColumnInfo(name = "Method", title = "Method", type = "string")
-    table$addColumnInfo(name = "Out", title = "Excluded variable", type = "string")
-    jaspResults[["LoggedEventsTable"]] <- table
-  } else {
-    table <- jaspResults[["LoggedEventsTable"]]
-  }
-
-  if (is.null(events) || nrow(events) == 0) {
-    table$addFootnote(paste0("No events were logged."))
+  if (is.null(events)) {
     return()
-  }
-
-  maxToShow <- ifelse(options$printAllLoggedEvents, nrow(events), options$maxLoggedEvents)
-  nShown <- min(nrow(events), maxToShow)
-  for (i in seq_len(nShown)) {
-    table$addRows(list(
-      Iteration = events[i, "it"],
-      Imputation = events[i, "im"],
-      Variable = events[i, "dep"],
-      Method = events[i, "meth"],
-      Out = events[i, "out"]
-    ))
-  }
-
-  if (nShown < nrow(events)) {
-    table$addFootnote(paste0("Showing ", nShown, " of ", nrow(events), " events."))
   } else {
-    table$addFootnote(paste0("Showing all ", nrow(events), " events."))
+    if (is.null(jaspResults[["LoggedEventsTable"]])) {
+      table <- createJaspTable("Logged events")
+      table$dependOn(options = c(imputationDependencies, "printAllLoggedEvents", "maxLoggedEvents"))
+    
+      table$addColumnInfo(name = "Iteration", title = "Iteration", type = "integer")
+      table$addColumnInfo(name = "Imputation", title = "Imputation", type = "integer")
+      table$addColumnInfo(name = "Variable", title = "Imputed variable", type = "string")
+      table$addColumnInfo(name = "Method", title = "Method", type = "string")
+      table$addColumnInfo(name = "Out", title = "Excluded variable", type = "string")
+      jaspResults[["LoggedEventsTable"]] <- table
+    } else {
+      table <- jaspResults[["LoggedEventsTable"]]
+    }
+    
+    maxToShow <- ifelse(options$printAllLoggedEvents, nrow(events), options$maxLoggedEvents)
+    nShown <- min(nrow(events), maxToShow)
+    shown <- seq_len(nShown)
+    
+    table$addRows(
+      data.frame(
+        Iteration = events[shown, "it"],
+        Imputation = events[shown, "im"],
+        Variable = events[shown, "dep"],
+        Method = events[shown, "meth"],
+        Out = events[shown, "out"]
+      )
+    )
+
+    if (nShown < nrow(events)) {
+      table$addFootnote(paste0("Showing ", nShown, " of ", nrow(events), " events."))
+    } else {
+      table$addFootnote(paste0("Showing all ", nrow(events), " events."))
+    }
   }
 }
 
