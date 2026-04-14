@@ -23,7 +23,7 @@ import JASP.Controls
 import JASP.Widgets
 import JASP.Theme
 // import "./regression"	as	Regression
-// import "./common"		as	Common
+import "./common" as Common
 
 // All Analysis forms must be built with the Form QML item
 Form
@@ -199,6 +199,8 @@ Form
 			{ label: qsTr("Reverse Monotone"),	value: "revmonotone"}
 		]
 	}
+
+	Common.ExportImputation { id: "exportImputation"; enabled: impVars.count > 0 }
 
 	Group
 	{
