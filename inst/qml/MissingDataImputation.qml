@@ -28,6 +28,7 @@ import "./common" as Common
 // All Analysis forms must be built with the Form QML item
 Form
 {
+	Common.ImportImputation { id: "importImputation"}
 
 	// Common.Variables { id:	"variableSelection" }
 

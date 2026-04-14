@@ -21,32 +21,20 @@ import JASP.Controls
 
 Group
 {
-	property alias enabled:			exportSection.enabled
-	property alias showSave:		saveGroup.visible
+
+	info: qsTr("You can load a previously imputed dataset to run the selected analysis on an already imputed version of the data.")
 
 	id:								exportSection
-	title:							qsTr("Export Imputations")
+	title:							qsTr("Import Imputed Data")
 
-	Group
+	FileSelector
 	{
-		id:							saveGroup
-
-		CheckBox
-		{
-			name:					"saveImps"
-			text:					qsTr("Save imputed data")
-			info:					qsTr("When clicked, the model is exported to the specified file path.")
-
-			FileSelector
-			{
-				name:				"savePath"
-				label:				qsTr("Save as")
-				placeholderText:	qsTr("e.g., location/imputations.jaspImp")
-				filter:				"*.jaspImp"
-				save:				true
-				fieldWidth:			180 * preferencesModel.uiScale
-				info:				qsTr("The file path for the saved model.")
-			}
-		}
+		name:				"loadImpPath"
+		label:				qsTr("Imputed data")
+		placeholderText:	qsTr("e.g., location/imputations.jaspImp")
+		filter:				"*.jaspImp"
+		save:				false
+		fieldWidth:			180 * preferencesModel.uiScale
 	}
 }
+

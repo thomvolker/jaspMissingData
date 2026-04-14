@@ -49,14 +49,20 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     "seed"
   )
 
-  if (.readyForMi(options)) {
+  .initMiceMids(jaspResults, imputationDependencies)
+  if(is.null(jaspResults[["MiceMids"]]$object) & !.readyForMi(options)) {
+    # Regular imputation part takes precedence over loading imputation models
+    jaspResults[["MiceMids"]][["object"]] <- .loadImputedData(options)$mids
+    imputed <- TRUE
+  }
+
+
+  if (.readyForMi(options) | !is.null(jaspResults[["MiceMids"]][["object"]])) {
 
     errors <- .errorHandling(dataset, options)
 
     # Output containers, tables, and plots based on the results. These functions should not return anything!
     # .createImputationContainer(jaspResults, options)
-
-    .initMiceMids(jaspResults, imputationDependencies)
 
     if(is.null(jaspResults[["MiceMids"]]$object)) {
       .imputeMissingData(jaspResults[["MiceMids"]], dataset[options$imputationTargets], options)
@@ -74,7 +80,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
       .createDensityPlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]], options)
     
     if (options$saveImps && options[["savePath"]] != "") 
-      .saveImputationModel(jaspResults, dataset, options)
+      .saveImputedData(jaspResults, dataset, options)
     if (options$runLinearRegression) {
       .lmFunction <<- .linregSetFittingFunction(options) # The deep assignment here is almost certainly a stupid idea
 
@@ -434,21 +440,34 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-.saveImputationModel <- function(jaspResults, dataset, options) {
-  validNames <- (length(grep(" ", decodeColNames(colnames(dataset)))) == 0) && 
-    (length(grep("_", decodeColNames(colnames(dataset)))) == 0)
-  if (!validNames) {
-    return()
-  }
+.saveImputedData <- function(jaspResults, dataset, options) {
   imps <- list(mids = jaspResults[["MiceMids"]]$object)
   imps[["jasp"]] <- list(
     encoded = colnames(dataset),
-    decoded = decodeColNames(colnames(dataset)),
-    jaspVersion = .baseCitation
+    decoded = jaspBase::decodeColNames(colnames(dataset)),
+    jaspVersion = jaspTools:::.baseCitation
   )
+  class(imps) <- c(class(jaspResults[["MiceMids"]][["object"]]), "jaspImputation")
   path <- options[["savePath"]]
   if (!endsWith(path, ".jaspImp")) {
     path <- paste0(path, ".jaspImp")
   }
   saveRDS(imps, file = path)
+}
+
+.loadImputedData <- function(options) {
+  if (options[["loadImpPath"]] != "") {
+    imps <- try({
+      readRDS(options[["loadImpPath"]])
+    })
+    if (!inherits(imps, "jaspImputation")) {
+      jaspBase:::.quitAnalysis(gettext("Error: The imputed data is not created in JASP."))
+    }
+    if (imps[["jasp"]][["jaspVersion"]] != jaspTools:::.baseCitation) {
+      jaspBase:::.quitAnalysis(gettext("Error: The imputed data is created using a different version of JASP."))
+    }
+  } else {
+    imps <- list(mids = NULL)
+  }
+  return(imps)
 }
