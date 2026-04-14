@@ -72,7 +72,9 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
       .createTracePlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]])
     if (options$densityPlot && is.null(jaspResults[["ConvergencePlots"]][["DensityPlots"]]))
       .createDensityPlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]], options)
-
+    
+    if (options$saveImps && options[["savePath"]] != "") 
+      .saveImputationModel(jaspResults, dataset, options)
     if (options$runLinearRegression) {
       .lmFunction <<- .linregSetFittingFunction(options) # The deep assignment here is almost certainly a stupid idea
 
@@ -432,36 +434,21 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-.exportImputations <- function(dataset, miceMids, options) {
-    if (options[["saveModel"]]) {
-      validNames <- (length(grep(" ", decodeColNames(colnames(dataset)))) == 0) && (length(grep("_", decodeColNames(colnames(dataset)))) == 0)
-      if (options[["savePath"]] != "" && validNames) {
-        table$addFootnote(gettextf("The trained model is saved as <i>%1$s</i>.", basename(options[["savePath"]])))
-      } else if (options[["savePath"]] != "" && !validNames) {
-        table$addFootnote(gettext("The trained model is <b>not</b> saved because the some of the variable names in the model contain spaces (i.e., ' ') or underscores (i.e., '_'). Please remove all such characters from the variable names and try saving the model again."))
-      } else {
-        table$addFootnote(gettext("The trained model is not saved until a file name is specified under 'Save as'."))
-      }
-      
-      if (options[["savePath"]] != "") {
-        validNames <- (length(grep(" ", decodeColNames(colnames(dataset)))) == 0) && (length(grep("_", decodeColNames(colnames(dataset)))) == 0)
-        if (!validNames) {
-          return()
-        }
-        model <- regressionResult[["model"]]
-      model[["jaspVars"]] <- list()
-      model[["jaspVars"]]$decoded <- list(target = decodeColNames(options[["target"]]), predictors = decodeColNames(options[["predictors"]]))
-      model[["jaspVars"]]$encoded = list(target = options[["target"]], predictors = options[["predictors"]])
-      model[["jaspScaling"]] <- attr(dataset, "jaspScaling")
-      model[["jaspVersion"]] <- .baseCitation
-      model[["explainer"]] <- regressionResult[["explainer"]]
-      class(model) <- c(class(regressionResult[["model"]]), "jaspRegression", "jaspMachineLearning")
-    path <- options[["savePath"]]
-    if (!endsWith(path, ".jaspML")) {
-      path <- paste0(path, ".jaspML")
-    }
-    saveRDS(model, file = path)
+.saveImputationModel <- function(jaspResults, dataset, options) {
+  validNames <- (length(grep(" ", decodeColNames(colnames(dataset)))) == 0) && 
+    (length(grep("_", decodeColNames(colnames(dataset)))) == 0)
+  if (!validNames) {
+    return()
   }
-}
-    }
+  imps <- list(mids = jaspResults[["MiceMids"]]$object)
+  imps[["jasp"]] <- list(
+    encoded = colnames(dataset),
+    decoded = decodeColNames(colnames(dataset)),
+    jaspVersion = .baseCitation
+  )
+  path <- options[["savePath"]]
+  if (!endsWith(path, ".jaspImp")) {
+    path <- paste0(path, ".jaspImp")
+  }
+  saveRDS(imps, file = path)
 }

@@ -42,8 +42,8 @@ Group
 			{
 				name:				"savePath"
 				label:				qsTr("Save as")
-				placeholderText:	qsTr("e.g., location/model.jaspML")
-				filter:				"*.jaspML" // TODO: Change file type
+				placeholderText:	qsTr("e.g., location/model.jaspImp")
+				filter:				"*.jaspImp"
 				save:				true
 				fieldWidth:			180 * preferencesModel.uiScale
 				info:				qsTr("The file path for the saved model.")
