@@ -87,18 +87,32 @@ Section
 
 	Group
 	{
+
 		title:	qsTr("Pooling")
+
 		DropDown
 		{
-			name: "fType"
-			label: qsTr("Pooling Rule for F-Statistic")
+			name: "fStat"
+			label: qsTr("Type of F-Statistic")
 			values: [
-				{ label: qsTr("D1"),	value: "d1"},
-				{ label: qsTr("D2"),	value: "d2"},
-				{ label: qsTr("D3"),	value: "d3"}
+				{ label: qsTr("D1"),	value: "d1" },
+				{ label: qsTr("D2"),	value: "d2" },
+				{ label: qsTr("D3"),	value: "d3" }
 			]
-			startValue: "1"
+			startValue: "d3"
 		}
+
+		DropDown
+		{
+			name: "llEst"
+			label: qsTr("Type of Log-Likelihood")
+			values: [
+				{ label: qsTr("Evaluated at Q-Hat"),	value: "qHat" },
+				{ label: qsTr("Evaluated at Q-Bar"),	value: "qBar" }
+			]
+			startValue: "qBar"
+		}
+
 	}
 
 	// Common.OutlierComponent { id: outlierComponentt}

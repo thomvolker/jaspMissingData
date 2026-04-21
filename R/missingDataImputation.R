@@ -62,7 +62,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     "steppingMethodCriteriaFRemoval",
     "interceptTerm",
     "quadraticTerms",
-    "fType"
+    "fStat",
+    "llEst"
   )
 
   if (.readyForMi(options)) {
@@ -86,7 +87,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
       .createDensityPlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]], options)
 
     if (options$runLinearRegression && .readyForLinReg(options, jaspResults[["MiceMids"]])) {
-      pooledLm <- makePooledLm(pool = TRUE, type = options$fType)
+      pooledLm <- makePooledLm(pool = TRUE, poolingParams = with(options, list(fStat = fStat, llEst = llEst)))
       .initModelContainer(jaspResults, c(imputationDependencies, regressionDependencies))
       .runRegression(jaspResults, options, ready = TRUE, lmFunction = pooledLm)
     }

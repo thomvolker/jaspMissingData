@@ -18,7 +18,7 @@
 ###------------------------------------------------------------------------------------------------------------------###
 
 #' @export
-makePooledLm <- function(pool, type) {
+makePooledLm <- function(pool, poolingParams) {
   function(formula, data, weights, ...) {
 
     ## TIL that formula objects are closures that capture the environment in which they are created. So, we need to create
@@ -32,7 +32,7 @@ makePooledLm <- function(pool, type) {
 
     if(!pool) return(fits)
 
-    pooledLmObject(fits, fType = type)
+    pooledLmObject(fits, pooling = poolingParams)
   }
 }
 
@@ -40,11 +40,11 @@ makePooledLm <- function(pool, type) {
 
 #' @export
 pooledLmObject <- function(fits,
-                           fType = 1,
+                           pooling = list(fStat = "d3", llEst = "qBar"),
                            include = list(model = FALSE, qr = FALSE, x = FALSE)
                            )
 {
-  fits <- .checkInputs(fits, fType)
+  fits <- .checkInputs(fits, pooling)
 
   ## Much of the lm object doesn't change across imputed datasets, so we can keep one of the original fits and replace
   ## the appropriate parts with MI-based estimates.
@@ -75,7 +75,7 @@ pooledLmObject <- function(fits,
   pooled$r2A  <- mice::pool.r.squared(fits, adjusted = TRUE)
 
   if (obj$rank > 1) { # We can only compute pooled F when we have some predictors
-    fFun            <- switch(fType, d1 = mice::D1, d2 = mice::D2, d3 = mice::D3)
+    fFun            <- switch(pooling$fStat, d1 = mice::D1, d2 = mice::D2, d3 = mice::D3)
     pooled$f        <- fFun(fits)
     obj$df.residual <- as.numeric(pooled$f$result)[3]
   } else if (obj$rank == 1) { # We're pooling an intercept-only model
@@ -84,6 +84,8 @@ pooledLmObject <- function(fits,
   } else {
     stop("Wow! Something has gone terribly wrong. You should not be able to access this condition.")
   }
+
+  pooled$logLik <- .pooledLogLik(fits, est = pooling$llEst, pool = TRUE)
 
   ## Replace pool-able stats with their pooled versions
   obj$coefficients        <- pooled$coef$pooled$estimate
@@ -109,7 +111,7 @@ pooledLmObject <- function(fits,
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-.checkInputs <- function(fits, fType) {
+.checkInputs <- function(fits, pooling) {
   if (!(mice::is.mira(fits) || is.list(fits)))
     stop("The 'fits' argument must be a a 'mira' object or list of fitted lm models.")
 
@@ -121,7 +123,10 @@ pooledLmObject <- function(fits,
     fits <- mice::as.mira(fits)
   }
 
-  if (!fType %in% paste0("d", 1:3)) stop("The 'fType' argument must be 'd1', 'd2', or 'd3'.")
+  if (!pooling$fStat %in% paste0("d", 1:3))
+    stop("The pooling type for F-statistics must be 'd1', 'd2', or 'd3'.")
+  if (!pooling$llEst %in% c("qBar", "qHat"))
+    stop("The estimate type at which to evaluate the log-likelihood must be 'qBar' or 'qHat'.")
 
   ranks <- sapply(fits$analyses, "[[", x = "rank")
   if (any(ranks <= 0)) stop("I don't know how to pool models with rank(X) < 1.")
@@ -181,13 +186,19 @@ print.summary.pooledlm <- function(object, allowStarGazing = FALSE, ...)
 ###------------------------------------------------------------------------------------------------------------------###
 
 #' @export
-coef.pooledlm   <- function(object, ...) object$coefficients
+coef.pooledlm   <- function(object) object$coefficients
 #' @export
-vcov.pooledlm   <- function(object, ...) object$pooled$vcov
+vcov.pooledlm   <- function(object) object$pooled$vcov
 #' @export
-resid.pooledlm  <- function(object, ...) object$residuals
+resid.pooledlm  <- function(object) object$residuals
 #' @export
-fitted.pooledlm <- function(object, ...) object$fitted.values
+fitted.pooledlm <- function(object) object$fitted.values
+#' @export
+logLik.pooledlm <- function(object) object$pooled$logLik
+#' @export
+# AIC.pooledlm    <- function(object, ...) object$pooled$infoCriteria$aic
+#' @export
+# BIC.pooledlm    <- function(object, ...) object$pooled$infoCriteria$bic
 
 ###------------------------------------------------------------------------------------------------------------------###
 
@@ -208,5 +219,49 @@ fitted.pooledlm <- function(object, ...) object$fitted.values
   ## Total var/covar:
   w + b + (b / m)
 }
+
+###------------------------------------------------------------------------------------------------------------------###
+
+.pooledLogLik <- function(fits, est = "qBar", pool = TRUE) {
+  if (est == "qBar") {
+    ll <- mice::D3(fits)$deviances$dev1.L / -2
+  } else if (est == "qHat") {
+    ll <- sapply(fits$analyses, logLik)
+  } else {
+    stop(paste0("The 'est' argument is currently '", est, "' but it should be either 'qBar' or 'qHat'."))
+  }
+
+  if (pool) ll <- mean(ll)
+
+  attr(ll, "nobs") <- fits$analyses[[1]]$residuals |> length()
+  attr(ll, "df")   <- fits$analyses[[1]]$rank + 1
+  class(ll)        <- "logLik"
+
+  ll
+}
+
+###------------------------------------------------------------------------------------------------------------------###
+
+## Pool AIC and BIC via naive averaging or the "Pooled Paramters - Pooled Log-Likelihoods" method proposed in
+## https://doi.org/10.1007/s41237-025-00281-6
+# .pooledInfoCriteria <- function(fits, type = "ppl") {
+#   d3 <- mice::D3(fits)
+
+#   ll <- d3$deviances$dev1.L
+#   p <- coef(fits$analyses[[1]]) |> length() + 1
+#   n <- fits$analyses[[1]]$model |> nrow()
+
+#   if (type == "ppl") {
+#     aic <- (ll + 2 * p) |> mean()
+#     bic <- (ll + log(n) * p) |> mean()
+#   } else if (type == "avg") {
+#     aic <- sapply(fits$analyses, AIC) |> mean()
+#     bic <- sapply(fits$analyses, BIC) |> mean()
+#   } else {
+#     stop(paste0("'", type, "' is not a valid type of pooling for information criteria."))
+#   }
+
+#   list(aic = aic, bic = bic, p = p, n = n, type = type)
+# }
 
 ###------------------------------------------------------------------------------------------------------------------###
