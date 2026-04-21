@@ -447,12 +447,15 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   } else {
     rHats <- jaspResults[["RHatsTable"]]
   }
+  rhat_res <- miceadds::Rhat.mice(jaspResults[["MiceMids"]]$object)
 
   rHats$addRows(
     subset(
-      miceadds::Rhat.mice(jaspResults[["MiceMids"]]$object),
+      rhat_res,
       MissProp > 0
     )
   )
-  rHats$addFootnote(paste0("Complete variables are not included in the table."))
+  if (any(rhat_res$MissProp < sqrt(.Machine$double.eps))) {
+    rHats$addFootnote(paste0("Complete variables are not included in the table."))
+  }
 }
