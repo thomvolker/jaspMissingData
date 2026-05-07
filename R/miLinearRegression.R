@@ -24,11 +24,11 @@
   modelContainer <- jaspResults[["ModelContainer"]]
   model <- jaspRegression:::.linregCalcModel(modelContainer, impData, options, ready, lmFunction)
 
-  model[[1]][["rSquareChange"]] <- .pooledRSquaredChange(fit1 = model[[1]]$fit) # , fStat = options$fStat)
+  ## We need to recompute the F-tests for the R2 changes since they're not pooled correctly in .linregCalcModel()
+  model[[1]][["rSquareChange"]] <- .pooledRSquaredChange(fit1 = model[[1]]$fit)
 
   for (i in seq_along(model)[-1]) {
-    model[[i]][["rSquareChange"]] <-
-      .pooledRSquaredChange(fit1 = model[[i]]$fit, fit0 = model[[i - 1]]$fit) # , fStat = options$fStat)
+    model[[i]][["rSquareChange"]] <- .pooledRSquaredChange(fit1 = model[[i]]$fit, fit0 = model[[i - 1]]$fit)
     # durbinWatson  <- model[[i]][["durbinWatson"]]
   }
 
@@ -73,12 +73,6 @@
 ### ------------------------------------------------------------------------------------------------------------------###
 
 .pooledRSquaredChange <- function(fit1, fit0 = NULL) {
-  # fFun <- switch(fStat,
-  #   d1 = mice::D1,
-  #   d2 = mice::D2,
-  #   d3 = mice::D3
-  # )
-  #
   if (is.null(fit0)) {
     out <- list(
       R2c = NA,
@@ -98,7 +92,6 @@
       p   = fOut$result[[4]]
     )
   }
-
   out
 }
 

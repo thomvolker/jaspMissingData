@@ -24,7 +24,9 @@ import JASP.Controls
 // This headless file is meant to be included as a QML component elsewhere
 Group
 {
-	Variables {}
+	property alias impVars:	variables.impVars
+
+	Variables { id:	variables }
 	Parameterization {}
 	PredictorMatrix {}
 	ModelSpec {}

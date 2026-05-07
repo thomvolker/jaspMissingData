@@ -23,6 +23,8 @@ import JASP.Controls
 VariablesForm
 {
 
+	property alias impVars:	impVars
+
 	AvailableVariablesList
 	{
 		name:	"allVariables"
