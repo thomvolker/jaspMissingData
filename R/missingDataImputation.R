@@ -48,13 +48,26 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     "quickpredExcludes",
     "seed"
   )
+  regressionDependencies <- c(
+    "dependent",
+    "method",
+    "covariates",
+    "factors",
+    "weights",
+    "modelTerms",
+    "steppingMethodCriteriaType",
+    "steppingMethodCriteriaPEntry",
+    "steppingMethodCriteriaPRemoval",
+    "steppingMethodCriteriaFEntry",
+    "steppingMethodCriteriaFRemoval",
+    "interceptTerm",
+    "quadraticTerms",
+    "fType"
+  )
 
   if (.readyForMi(options)) {
 
     errors <- .errorHandling(dataset, options)
-
-    # Output containers, tables, and plots based on the results. These functions should not return anything!
-    # .createImputationContainer(jaspResults, options)
 
     .initMiceMids(jaspResults, imputationDependencies)
 
@@ -66,27 +79,25 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
     ## Initialize containers to hold the convergence plots and analysis results:
     .initConvergencePlots(jaspResults, imputationDependencies)
-    .initAnalysisContainer(jaspResults, imputationDependencies)
 
     if (options$tracePlot && is.null(jaspResults[["ConvergencePlots"]][["TracePlot"]]))
       .createTracePlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]])
     if (options$densityPlot && is.null(jaspResults[["ConvergencePlots"]][["DensityPlots"]]))
       .createDensityPlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]], options)
+
     if (options$rHats) {
       .createRHatsTable(jaspResults, options, imputationDependencies)
     }
-    if (options$runLinearRegression) {
-      .lmFunction <<- .linregSetFittingFunction(options) # The deep assignment here is almost certainly a stupid idea
-
-      .runRegression(jaspResults, jaspResults[["MiceMids"]], options)
-
+  
+    if (options$runLinearRegression && .readyForLinReg(options, jaspResults[["MiceMids"]])) {
+      pooledLm <- makePooledLm(pool = TRUE, type = options$fType)
+      .initModelContainer(jaspResults, c(imputationDependencies, regressionDependencies))
+      .runRegression(jaspResults, options, ready = TRUE, lmFunction = pooledLm)
     }
   }
 
   return()
 }
-
-
 
 ###-Init Functions---------------------------------------------------------------------------------------------------###
 
@@ -94,8 +105,6 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
   # Calculate any options common to multiple parts of the analysis
   options$imputedVariables <- ""
-  options$fType <- 1
-  options$lmFunction <- pooledLm
 
   tmp <- options$imputationVariables
   if (interactive()) {
@@ -137,14 +146,13 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 ###------------------------------------------------------------------------------------------------------------------###
 
-.initAnalysisContainer <- function(jaspResults, imputationDependencies) {
-  if(!is.null(jaspResults[["AnalysisContainer"]])) return()
+.initModelContainer <- function(jaspResults, dependencies) {
+  if(!is.null(jaspResults[["ModelContainer"]])) return()
 
-  analysisContainer <- createJaspContainer(title = "Analyses")
-  analysisContainer$dependOn(options = c(imputationDependencies) # TODO: add regression qml options here
-  )
+  modelContainer <- createJaspContainer()
+  modelContainer$dependOn(options = dependencies)
 
-  jaspResults[["AnalysisContainer"]] <- analysisContainer
+  jaspResults[["ModelContainer"]] <- modelContainer
 }
 
 ###------------------------------------------------------------------------------------------------------------------###
@@ -166,7 +174,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   method
 }
 
-### Passive imputation ----------------------------------------------------------------------------------------------###
+###-Passive imputation-----------------------------------------------------------------------------------------------###
 
 .parseCharacterFormula <- function(x, encoded, decoded) {
   for (i in seq_along(decoded)) {
@@ -210,7 +218,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   list(meth = methodVector, pred = predictorMatrix)
 }
 
-### Text-specified imputation models ---------------------------------------------------------------------------------###
+###-Text-specified imputation models---------------------------------------------------------------------------------###
 
 .processImpModel <- function(dataset, options, predictorMatrix) {
 
@@ -343,7 +351,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   }
 
   if (!inherits(miceOut, "try-error")) {
-    miceMids$object          <- miceOut
+    miceMids$object <- miceOut
   } else {
     stop(
       "The mice() function crashed when attempting to impute the missing data.\n",
