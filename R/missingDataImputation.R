@@ -85,7 +85,9 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     if (options$densityPlot && is.null(jaspResults[["ConvergencePlots"]][["DensityPlots"]])) {
       .createDensityPlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]], options)
     }
-
+    
+    if (options$saveImps && options[["savePath"]] != "") 
+      .saveImputationModel(jaspResults, dataset, options)
     if (options$runLinearRegression && .readyForLinReg(options, jaspResults[["MiceMids"]])) {
       pooledLm <- makePooledLm(pool = TRUE, poolingParams = with(options, list(fStat = fStat, llEst = llEst)))
       .initModelContainer(jaspResults, c(imputationDependencies, regressionDependencies))
@@ -481,4 +483,23 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
       saveRDS(model, file = path)
     }
   }
+}
+
+.saveImputationModel <- function(jaspResults, dataset, options) {
+  validNames <- (length(grep(" ", decodeColNames(colnames(dataset)))) == 0) && 
+    (length(grep("_", decodeColNames(colnames(dataset)))) == 0)
+  if (!validNames) {
+    return()
+  }
+  imps <- list(mids = jaspResults[["MiceMids"]]$object)
+  imps[["jasp"]] <- list(
+    encoded = colnames(dataset),
+    decoded = decodeColNames(colnames(dataset)),
+    jaspVersion = .baseCitation
+  )
+  path <- options[["savePath"]]
+  if (!endsWith(path, ".jaspImp")) {
+    path <- paste0(path, ".jaspImp")
+  }
+  saveRDS(imps, file = path)
 }
