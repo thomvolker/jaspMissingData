@@ -65,17 +65,11 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     "llEst"
   )
 
-  if (.readyForMi(options)) {
-    errors <- .errorHandling(dataset, options)
-    if (is.null(jaspResults[["MiceMids"]]$object)) {
-      .initMiceMids(jaspResults, imputationDependencies)
-    }
-    
-    if(is.null(jaspResults[["MiceMids"]]$object) & !.readyForMi(options)) {
-      # Regular imputation part takes precedence over loading imputation models
-      jaspResults[["MiceMids"]][["object"]] <- .loadImputedData(options)$mids
-      imputed <- TRUE
-    }
+  .initMiceMids(jaspResults, imputationDependencies)
+  
+  if(is.null(jaspResults[["MiceMids"]]$object) & !.readyForMi(options)) {
+    # Regular imputation part takes precedence over loading imputation models
+    jaspResults[["MiceMids"]][["object"]] <- .loadImputedData(options)$mids
   }
 
 
@@ -506,12 +500,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 }
 
 .saveImputedData <- function(jaspResults, dataset, options) {
-  imps <- list(mids = jaspResults[["MiceMids"]]$object)
-  imps[["jasp"]] <- list(
-    encoded = colnames(dataset),
-    decoded = jaspBase::decodeColNames(colnames(dataset)),
-    jaspVersion = jaspTools:::.baseCitation
-  )
+  imps <- jaspResults[["MiceMids"]]$object
   class(imps) <- c(class(jaspResults[["MiceMids"]][["object"]]), "jaspImputation")
   path <- options[["savePath"]]
   if (!endsWith(path, ".jaspImp")) {
@@ -528,11 +517,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     if (!inherits(imps, "jaspImputation")) {
       jaspBase:::.quitAnalysis(gettext("Error: The imputed data is not created in JASP."))
     }
-    if (imps[["jasp"]][["jaspVersion"]] != jaspTools:::.baseCitation) {
-      jaspBase:::.quitAnalysis(gettext("Error: The imputed data is created using a different version of JASP."))
-    }
   } else {
-    imps <- list(mids = NULL)
+    imps <- NULL
   }
   return(imps)
 }
