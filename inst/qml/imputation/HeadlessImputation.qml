@@ -26,9 +26,11 @@ Group
 {
 	property alias impVars:	variables.impVars
 
+	ImportImputation {}
 	Variables { id:	variables }
 	Parameterization {}
 	PredictorMatrix {}
+	ExpertImputation {enabled: impVars.count > 0}
 	ModelSpec {}
 	PassiveImputation {}
 	Diagnostics {}
