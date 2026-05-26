@@ -66,10 +66,17 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   )
 
   .initMiceMids(jaspResults, imputationDependencies)
+<<<<<<< HEAD
   
   if(is.null(jaspResults[["MiceMids"]]$object) & !.readyForMi(options)) {
     # Regular imputation part takes precedence over loading imputation models
     jaspResults[["MiceMids"]][["object"]] <- .loadImputedData(options)
+=======
+  if(is.null(jaspResults[["MiceMids"]]$object) & !.readyForMi(options)) {
+    # Regular imputation part takes precedence over loading imputation models
+    jaspResults[["MiceMids"]][["object"]] <- .loadImputedData(options)
+    imputed <- TRUE
+>>>>>>> 91f6ff208df304495e3004fbcf14202bdbddfc01
   }
 
 
@@ -94,6 +101,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     }
     if (options$densityPlot && is.null(jaspResults[["ConvergencePlots"]][["DensityPlots"]])) {
       .createDensityPlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]], options)
+<<<<<<< HEAD
     }
     
     if (options$saveImps && options[["savePath"]] != "") 
@@ -103,6 +111,11 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
       .initModelContainer(jaspResults, c(imputationDependencies, regressionDependencies))
       .runRegression(jaspResults, options, ready = TRUE, lmFunction = pooledLm)
     }
+=======
+    
+    if (options$saveImps && options[["savePath"]] != "") 
+      .saveImputedData(jaspResults, dataset, options)
+>>>>>>> 91f6ff208df304495e3004fbcf14202bdbddfc01
     if (options$runLinearRegression) {
       .lmFunction <<- .linregSetFittingFunction(options) # The deep assignment here is almost certainly a stupid idea
       .runRegression(jaspResults, jaspResults[["MiceMids"]], options)
