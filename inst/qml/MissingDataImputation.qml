@@ -25,6 +25,7 @@ import "./imputation"	as	Imputation
 // All Analysis forms must be built with the Form QML item
 Form
 {
+	Common.ImportImputation { id: "importImputation"}
 
 	Imputation.HeadlessImputation { id: imputation }
 
