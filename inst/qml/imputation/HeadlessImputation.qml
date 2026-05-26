@@ -30,7 +30,7 @@ Group
 	Variables { id:	variables }
 	Parameterization {}
 	PredictorMatrix {}
-	ExpertImputation {enabled: impVars.count > 0}
+	ExportImputation {enabled: impVars.count > 0}
 	ModelSpec {}
 	PassiveImputation {}
 	Diagnostics {}
