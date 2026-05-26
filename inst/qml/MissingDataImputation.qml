@@ -26,7 +26,7 @@ import "./imputation"	as	Imputation
 Form
 {
 
-	Imputation.HeadlessImputation {}
+	Imputation.HeadlessImputation { id: imputation }
 
 	Group
 	{
@@ -51,6 +51,6 @@ Form
 
 	}
 
-	Regression.RegressionLinear {}
+	Regression.RegressionLinear { imputedVariables: imputation.impVars }
 
 }

@@ -26,7 +26,9 @@ Section
 	id:		regressionAnalysis
 	title:	qsTr("Regression Analysis")
 
-	Variables {}
+	property var imputedVariables
+
+	Variables { candidateVariables: imputedVariables }
 	Model {}
 	Statistics {}
 	Methods {}

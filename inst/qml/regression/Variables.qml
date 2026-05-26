@@ -22,8 +22,10 @@ import JASP.Controls
 
 VariablesForm
 {
-	AvailableVariablesList { name: "allVariablesList" }
-	AssignedVariablesList { name: "dependent";	title: qsTr("Dependent Variable"); info: qsTr("Dependent variable.")	; allowedColumns: ["scale"]; singleVariable: true;		}
+	property var candidateVariables
+
+	AvailableVariablesList { name: "allVariablesList";	source: candidateVariables }
+	AssignedVariablesList { name: "dependent";	title: qsTr("Dependent Variable"); info: qsTr("Dependent variable."); allowedColumns: ["scale"]; singleVariable: true }
 	DropDown
 	{
 		name: "method"
