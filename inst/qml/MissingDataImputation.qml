@@ -50,6 +50,7 @@ Form
 
 	}
 
-	Regression.RegressionLinear { imputedVariables: imputation.impVars }
+	//Regression.RegressionLinear { imputedVariables: imputation.impVars }
+	Regression.RegressionLinear {}
 
 }

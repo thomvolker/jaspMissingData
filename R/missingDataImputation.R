@@ -97,15 +97,12 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     }
     
     if (options$saveImps && options[["savePath"]] != "") 
-      .saveImputationModel(jaspResults, dataset, options)
+      .saveImputedData(jaspResults, dataset, options)
     if (options$runLinearRegression && .readyForLinReg(options, jaspResults[["MiceMids"]])) {
+      .checkRegressionValidVars(options, jaspResults)
       pooledLm <- makePooledLm(pool = TRUE, poolingParams = with(options, list(fStat = fStat, llEst = llEst)))
       .initModelContainer(jaspResults, c(imputationDependencies, regressionDependencies))
       .runRegression(jaspResults, options, ready = TRUE, lmFunction = pooledLm)
-    }
-    if (options$runLinearRegression) {
-      .lmFunction <<- .linregSetFittingFunction(options) # The deep assignment here is almost certainly a stupid idea
-      .runRegression(jaspResults, jaspResults[["MiceMids"]], options)
     }
   }
 

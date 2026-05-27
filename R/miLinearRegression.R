@@ -98,3 +98,17 @@
 # environment(.pooledRSquaredChange) <- asNamespace("jaspRegression")
 
 ### ------------------------------------------------------------------------------------------------------------------###
+
+.checkRegressionValidVars <- function(options, jaspResults) {
+  regvars <- c(options$dependent, options$covariates, options$factors)
+  impvars <- colnames(jaspResults[["MiceMids"]]$object$data)
+  if(any(!regvars %in% impvars)) {
+    notimputed <- regvars[which(!regvars %in% impvars)]
+    stop(
+      "The variables ", 
+      paste0(jaspBase::decodeColNames(notimputed), collapse = ", ", 
+      " are not included in the imputation object. If you really don't want to include these variables in the imputation, exclude them through the imputation model specification."),
+      call. = FALSE
+    )
+  }
+}
