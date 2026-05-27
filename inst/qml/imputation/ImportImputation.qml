@@ -21,14 +21,16 @@ import JASP.Controls
 
 Group
 {
+	property alias loadImpPath: imputationSelector.value
 
 	info: qsTr("You can load a previously imputed dataset to run the selected analysis on an already imputed version of the data.")
 
-	id:								exportSection
+	id:								importSection
 	title:							qsTr("Import Imputed Data")
 
 	FileSelector
 	{
+		id:                 imputationSelector
 		name:				"loadImpPath"
 		label:				qsTr("Imputed data")
 		placeholderText:	qsTr("e.g., location/imputations.jaspImp")

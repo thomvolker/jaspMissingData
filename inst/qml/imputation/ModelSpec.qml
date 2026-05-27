@@ -27,6 +27,8 @@ Section
 
 	id:		predictorSpec
 	title:	qsTr("Imputation model specification")
+	property alias enabled:			predictorSpec.enabled
+
 
 	DropDown
 	{
