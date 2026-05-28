@@ -473,13 +473,12 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   tryCatch(
     saveRDS(imps, file = path),
     error = function(e) {
-      stop(
+      jaspBase:::.quitAnalysis(
         sprintf(
           "Failed to save imputation model to '%s': %s",
           path,
           conditionMessage(e)
-        ),
-        call. = FALSE
+        )
       )
     }
   )
