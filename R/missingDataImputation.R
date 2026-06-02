@@ -258,7 +258,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     nullModelVars <- modelsMat[1,]
 
     if (!is.null(fullModelVars) && any(fullModelVars %in% nullModelVars)) {
-      stop("You cannot specify imputation models starting from the full and the empty model simultaneously.")
+      stop("You cannot specify imputation models for a single variable in the full and the empty model simultaneously.")
     }
     if (any(!nullModelVars %in% encodedMethNames)) {
       stop("The following variables in your null model do not exist in the data:\n",
