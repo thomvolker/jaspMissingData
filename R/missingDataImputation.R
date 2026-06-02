@@ -32,39 +32,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   # Init options: add variables to options to be used in the remainder of the analysis
   options <- .processImputationOptions(options)
 
-  imputationDependencies <- c(
-    "imputationVariables",
-    "passiveImputation",
-    "changeFullModel",
-    "changeNullModel",
-    "visitSequence",
-    "nImps",
-    "nIters",
-    "quickpred", 
-    "quickpredMincor", 
-    "quickpredMinpuc", 
-    "quickpredMethod", 
-    "quickpredIncludes", 
-    "quickpredExcludes",
-    "seed"
-  )
-  regressionDependencies <- c(
-    "dependent",
-    "method",
-    "covariates",
-    "factors",
-    "weights",
-    "modelTerms",
-    "steppingMethodCriteriaType",
-    "steppingMethodCriteriaPEntry",
-    "steppingMethodCriteriaPRemoval",
-    "steppingMethodCriteriaFEntry",
-    "steppingMethodCriteriaFRemoval",
-    "interceptTerm",
-    "quadraticTerms",
-    "fStat",
-    "llEst"
-  )
+  imputationDependencies <- .setImputationDependencies() 
+  modelDependencies <- .setModelDependencies(options$analysis) 
 
   if (.readyForMi(options)) {
 
@@ -86,9 +55,9 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     if (options$densityPlot && is.null(jaspResults[["ConvergencePlots"]][["DensityPlots"]]))
       .createDensityPlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]], options)
 
-    if (options$runLinearRegression && .readyForLinReg(options, jaspResults[["MiceMids"]])) {
+    if (options$analysis == "linreg" && .readyForLinReg(options, jaspResults[["MiceMids"]])) {
       pooledLm <- makePooledLm(pool = TRUE, poolingParams = with(options, list(fStat = fStat, llEst = llEst)))
-      .initModelContainer(jaspResults, c(imputationDependencies, regressionDependencies))
+      .initModelContainer(jaspResults, c(imputationDependencies, modelDependencies))
       .runRegression(jaspResults, options, ready = TRUE, lmFunction = pooledLm)
     }
   }
