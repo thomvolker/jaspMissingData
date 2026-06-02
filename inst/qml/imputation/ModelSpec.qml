@@ -34,7 +34,8 @@ Section
 		name:	"changePredOption"
 		label:	qsTr("Change imputation predictors")
 		values:	[
-			{ label: qsTr("Fully flexible specification"),	value: "flex" }
+			{ label: qsTr("Add to null model"),	value: "null" },
+			{ label: qsTr("Change full model"),	value: "full" }
 		]
 	}
 
@@ -42,14 +43,14 @@ Section
 		id:					changeNullModel
 		name:				"changeNullModel"
 		placeholderText:	qsTr("Add terms to an intercept-only model.")
-		visible:			changePredOption.currentValue === "flex"
+		visible:			changePredOption.currentValue === "null"
 	}
 
 	TextArea {
 		id:					changeFullModel
 		name:				"changeFullModel"
 		placeholderText:	qsTr("Add terms to a full model (containing all main-effects).")
-		visible:			changePredOption.currentValue === "flex"
+		visible:			changePredOption.currentValue === "full"
 	}
 
 }
