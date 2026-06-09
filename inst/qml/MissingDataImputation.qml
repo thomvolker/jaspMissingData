@@ -21,6 +21,7 @@ import JASP
 import JASP.Controls
 import "./regression"	as	Regression
 import "./imputation"	as	Imputation
+import "./descriptives" as  Descriptives
 
 // All Analysis forms must be built with the Form QML item
 Form
@@ -48,6 +49,10 @@ Form
 		]
 	}
 
+	Descriptives.Descriptives { 
+		imputedVariables: imputation.impVars
+		visible: analysis.currentValue === "desc"
+	}
 	Regression.RegressionLinear 
 	{
 		imputedVariables: imputation.impVars

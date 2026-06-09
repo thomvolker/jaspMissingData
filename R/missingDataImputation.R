@@ -50,9 +50,9 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     ## Initialize containers to hold the convergence plots and analysis results:
     .initConvergencePlots(jaspResults, imputationDependencies)
 
-    if (options$tracePlot && is.null(jaspResults[["ConvergencePlots"]][["TracePlot"]]))
+    if (options$impTracePlot && is.null(jaspResults[["ConvergencePlots"]][["TracePlot"]]))
       .createTracePlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]])
-    if (options$densityPlot && is.null(jaspResults[["ConvergencePlots"]][["DensityPlots"]]))
+    if (options$impDensityPlot && is.null(jaspResults[["ConvergencePlots"]][["DensityPlots"]]))
       .createDensityPlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]], options)
 
     if (options$analysis == "linreg" && .readyForLinReg(options, jaspResults[["MiceMids"]])) {
@@ -104,7 +104,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
   convergencePlots <- createJaspContainer(title = "Convergence Plots")
   convergencePlots$dependOn(
-    options = c(imputationDependencies, "tracePlot", "densityPlot")
+    options = c(imputationDependencies, "impTracePlot", "impDensityPlot")
   )
 
   jaspResults[["ConvergencePlots"]] <- convergencePlots

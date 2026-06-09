@@ -35,17 +35,17 @@ Section
 
 		CheckBox
 		{
-			name:		"tracePlot"
+			name:		"impTracePlot"
 			label:		qsTr("Trace Plots")
-			id:			tracePlot
+			id:			impTracePlot
 			checked:	false
 		}
 
 		CheckBox
 		{
-			name:		"densityPlot"
+			name:		"impDensityPlot"
 			label:		qsTr("Density Plots")
-			id:			densityPlot
+			id:			impDensityPlot
 			checked:	false
 		}
 
