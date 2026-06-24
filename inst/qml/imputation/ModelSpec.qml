@@ -28,10 +28,6 @@ Section
 	id:		predictorSpec
 	title:	qsTr("Imputation model specification")
 
-	DropDown
-	{
-	}
-
 	TextArea {
 		id:					changeNullModel
 		name:				"changeNullModel"
