@@ -36,6 +36,13 @@
 
 ###------------------------------------------------------------------------------------------------------------------###
 
+###------------------------------------------------------------------------------------------------------------------###
+
+.readyForDescriptives <- function(options, miceMids) {
+  inherits(miceMids$object, "mids") && # We can't do an analysis before imputing
+    length(options$variables) > 0
+}
+
 # .readData <- function(dataset, options) dataset[options$imputationVariables]
 #   vars <- unlist(options$variables)
 #   # Read in the dataset using the built-in functions

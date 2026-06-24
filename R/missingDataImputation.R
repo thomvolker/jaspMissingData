@@ -33,7 +33,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   options <- .processImputationOptions(options)
 
   imputationDependencies <- .setImputationDependencies() 
-  modelDependencies <- .setModelDependencies(options$analysis) 
+  modelDependencies <- .setModelDependencies(options$analysis)
 
   if (.readyForMi(options)) {
 
@@ -55,6 +55,9 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     if (options$impDensityPlot && is.null(jaspResults[["ConvergencePlots"]][["DensityPlots"]]))
       .createDensityPlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]], options)
 
+    if (options$analysis == "desc" && .readyForDescriptives(options, jaspResults[["MiceMids"]])) {
+      .runDescriptives(jaspResults, options, ready = TRUE)
+    }
     if (options$analysis == "linreg" && .readyForLinReg(options, jaspResults[["MiceMids"]])) {
       pooledLm <- makePooledLm(pool = TRUE, poolingParams = with(options, list(fStat = fStat, llEst = llEst)))
       .initModelContainer(jaspResults, c(imputationDependencies, modelDependencies))
