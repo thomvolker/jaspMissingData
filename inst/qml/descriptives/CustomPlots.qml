@@ -117,7 +117,11 @@ Section
 				AvailableVariablesList
 				{
 					name: 				"densityPlotVariables"
-					source: 			candidateVariables
+					source: [{
+						name: "descVariablesList",
+						discard: ["variables", "splitBy"],
+						use: "type=ordinal|nominal"
+					}]
 				}
 
 				AssignedVariablesList
@@ -189,7 +193,11 @@ Section
 				AvailableVariablesList
 				{
 					name: "heatmapVariables"
-					source: candidateVariables
+					source: [{
+						name: "descVariablesList",
+						discard: ["variables", "splitBy"],
+						use: "type=ordinal|nominal"
+					}]				
 				}
 				AssignedVariablesList
 				{

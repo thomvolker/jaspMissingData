@@ -32,8 +32,22 @@ Group
         candidateVariables: imputedVariables
     }
 
+    CheckBox
+	{
+		name	: "descriptivesTableTransposed"
+		label	: qsTr("Transpose descriptives table")
+		info	: qsTr("Tranposes the main table")
+		checked	: false
+	}
+
+    Statistics { }
+
+    BasicPlots { }
+
     CustomPlots {
         candidateVariables: imputedVariables
         splitByCount: inputVariables.splitByControl.count
     }
+
+    Tables { }
 }
