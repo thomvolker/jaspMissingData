@@ -30,28 +30,15 @@ Form
 
 	Group
 	{
-
 		title:	qsTr("Analyses")
-
-	DropDown
+			CheckBox
 	{
-		id:		analysis
-		name:	"analysis"
-		label:	qsTr("Analysis model")
-		values:	[
-			{ label: qsTr("No analysis"), value: "null" },
-			{ label: qsTr("Descriptives"), value: "desc" },
-			{ label: qsTr("Classical ANOVA"), value: "anova" },
-			{ label: qsTr("Classical Correlation"), value: "cor" },
-			{ label: qsTr("Classical Linear Regression"), value: "linreg" },
-			{ label: qsTr("Classical Logistic Regression"),	value: "logreg" }
-		]
+		name:		"linreg"
+		label:		qsTr("Linear Regression")
+		id:			linreg
+		checked:	false
 	}
-
-	Regression.RegressionLinear 
-	{
-		imputedVariables: imputation.impVars
-		visible: analysis.currentValue === "linreg" 
-	}
+		
+		Regression.RegressionLinear { imputedVariables: imputation.impVars; visible: linreg.checked }
 	}
 }
