@@ -27,9 +27,11 @@
   ## We need to recompute the F-tests for the R2 changes since they're not pooled correctly in .linregCalcModel()
   model[[1]][["rSquareChange"]] <- .pooledRSquaredChange(fit1 = model[[1]]$fit)
 
-  for (i in seq_along(model)[-1]) {
-    model[[i]][["rSquareChange"]] <- .pooledRSquaredChange(fit1 = model[[i]]$fit, fit0 = model[[i - 1]]$fit)
-    # durbinWatson  <- model[[i]][["durbinWatson"]]
+  if (length(options$covariates) + length(options$factors) > 0) {
+    for (i in seq_along(model)[-1]) {
+      model[[i]][["rSquareChange"]] <- .pooledRSquaredChange(fit1 = model[[i]]$fit, fit0 = model[[i - 1]]$fit)
+      # durbinWatson  <- model[[i]][["durbinWatson"]]
+    }
   }
 
   if (is.null(modelContainer[["summaryTable"]])) {

@@ -98,6 +98,10 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     
     if (options$saveImps && options[["savePath"]] != "") 
       .saveImputedData(jaspResults, dataset, options)
+
+    if (options$rHats)
+      .createRHatsTable(jaspResults, options, imputationDependencies)
+    
     if (options$runLinearRegression && .readyForLinReg(options, jaspResults[["MiceMids"]])) {
       .checkRegressionValidVars(options, jaspResults)
       pooledLm <- makePooledLm(pool = TRUE, poolingParams = with(options, list(fStat = fStat, llEst = llEst)))
@@ -496,4 +500,30 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     imps <- NULL
   }
   return(imps)
+}
+
+.createRHatsTable <- function(jaspResults, options, imputationDependencies) {
+  if (is.null(jaspResults[["RHatsTable"]])) {
+    rHats <- createJaspTable("RHat Convergence Diagnostics")
+    rHats$dependOn(options = c(imputationDependencies, "rHats"))
+    rHats$addColumnInfo(name = "variable", title = "Variable", type = "string")
+    rHats$addColumnInfo(name = "MissProp", title = "Missingness Proportion", type = "number")
+    rHats$addColumnInfo(name = "Rhat.M.imp", title = "RHat of means", type = "number")
+    rHats$addColumnInfo(name = "Rhat.Var.imp", title = "RHat of variances", type = "number")
+
+    jaspResults[["RHatsTable"]] <- rHats
+  } else {
+    rHats <- jaspResults[["RHatsTable"]]
+  }
+  rhat_res <- miceadds::Rhat.mice(jaspResults[["MiceMids"]]$object)
+
+  rHats$addRows(
+    subset(
+      rhat_res,
+      MissProp > 0
+    )
+  )
+  if (any(rhat_res$MissProp < sqrt(.Machine$double.eps))) {
+    rHats$addFootnote(paste0("Complete variables are not included in the table."))
+  }
 }
