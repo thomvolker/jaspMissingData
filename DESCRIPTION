@@ -14,7 +14,8 @@ Imports:
   jaspGraphs,
   jaspRegression,
   ggmice,
-  mice
+  mice,
+  miceadds
 Suggests:
   testthat (>= 3.0.0),
   devtools,
