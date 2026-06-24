@@ -54,7 +54,6 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
       .createTracePlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]])
     if (options$densityPlot && is.null(jaspResults[["ConvergencePlots"]][["DensityPlots"]]))
       .createDensityPlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]], options)
-
     if (options$rHats)
       .createRHatsTable(jaspResults, options, imputationDependencies)
     
