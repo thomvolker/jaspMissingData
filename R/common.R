@@ -54,3 +54,49 @@
              all.target = options$imputationTargets,
              observations.amount = '< 2',
              exitAnalysisIfErrors = TRUE)
+
+
+###------------------------------------------------------------------------------------------------------------------###
+
+.imputationDependencies <- function() {
+  c(
+    "imputationVariables",
+    "passiveImputation",
+    "changeFullModel",
+    "changeNullModel",
+    "visitSequence",
+    "nImps",
+    "nIters",
+    "quickpred", 
+    "quickpredMincor", 
+    "quickpredMinpuc", 
+    "quickpredMethod", 
+    "quickpredIncludes", 
+    "quickpredExcludes",
+    "seed"
+  )
+}
+
+.analysisDependencies <- function(analysis) {
+  deps <- NULL
+  if (analysis == "linreg") {
+    deps <- c(
+      "dependent",
+      "method",
+      "covariates",
+      "factors",
+      "weights",
+      "modelTerms",
+      "steppingMethodCriteriaType",
+      "steppingMethodCriteriaPEntry",
+      "steppingMethodCriteriaPRemoval",
+      "steppingMethodCriteriaFEntry",
+      "steppingMethodCriteriaFRemoval",
+      "interceptTerm",
+      "quadraticTerms",
+      "fStat",
+      "llEst"
+    )
+  }
+  deps
+}
