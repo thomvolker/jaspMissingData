@@ -21,7 +21,7 @@ import JASP
 import JASP.Controls
 // import "./common"		as Common
 
-Section
+Group
 {
 	id:		regressionAnalysis
 	title:	qsTr("Regression Analysis")
