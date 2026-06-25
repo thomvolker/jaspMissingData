@@ -17,6 +17,6 @@ message("Restoring/synchronizing the project library.")
 renv::restore(clean = FALSE)
 
 message("Installing the package.")
-renv::install('.', exclude = c("jaspRegression", "jaspAnova", "jaspTTests", "jaspDescriptives"))
+renv::install('.')
 
 message("R libPath for developer mode:\n", .libPaths()[1])

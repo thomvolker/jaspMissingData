@@ -30,28 +30,16 @@ Section
 	property alias enabled:			predictorSpec.enabled
 
 
-	DropDown
-	{
-		id:		changePredOption
-		name:	"changePredOption"
-		label:	qsTr("Change imputation predictors")
-		values:	[
-			{ label: qsTr("Fully flexible specification"),	value: "flex" }
-		]
-	}
-
 	TextArea {
 		id:					changeNullModel
 		name:				"changeNullModel"
 		placeholderText:	qsTr("Add terms to an intercept-only model.")
-		visible:			changePredOption.currentValue === "flex"
 	}
 
 	TextArea {
 		id:					changeFullModel
 		name:				"changeFullModel"
 		placeholderText:	qsTr("Add terms to a full model (containing all main-effects).")
-		visible:			changePredOption.currentValue === "flex"
 	}
 
 }

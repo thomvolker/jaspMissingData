@@ -31,41 +31,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   # Init options: add variables to options to be used in the remainder of the analysis
   options <- .processImputationOptions(options)
 
-  imputationDependencies <- c(
-    "imputationVariables",
-    "passiveImputation",
-    "changeFullModel",
-    "changeNullModel",
-    "visitSequence",
-    "nImps",
-    "nIters",
-    "quickpred",
-    "quickpredMincor",
-    "quickpredMinpuc",
-    "quickpredMethod",
-    "quickpredIncludes",
-    "quickpredExcludes",
-    "seed"
-  )
-  regressionDependencies <- c(
-    "dependent",
-    "method",
-    "covariates",
-    "factors",
-    "weights",
-    "modelTerms",
-    "steppingMethodCriteriaType",
-    "steppingMethodCriteriaPEntry",
-    "steppingMethodCriteriaPRemoval",
-    "steppingMethodCriteriaFEntry",
-    "steppingMethodCriteriaFRemoval",
-    "interceptTerm",
-    "quadraticTerms",
-    "fStat",
-    "llEst"
-  )
-
-  .initMiceMids(jaspResults, imputationDependencies)
+  .initMiceMids(jaspResults)
   
   if(is.null(jaspResults[["MiceMids"]]$object) & !.readyForMi(options)) {
     # Regular imputation part takes precedence over loading imputation models
@@ -77,17 +43,16 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
     errors <- .errorHandling(dataset, options)
 
-    # Output containers, tables, and plots based on the results. These functions should not return anything!
-    # .createImputationContainer(jaspResults, options)
+    .initMiceMids(jaspResults)
 
     if(is.null(jaspResults[["MiceMids"]]$object)) {
       .imputeMissingData(jaspResults[["MiceMids"]], dataset[options$imputationTargets], options)
     }
 
-    .loggedEventsToTable(jaspResults, options, imputationDependencies)
+    .loggedEventsToTable(jaspResults, options)
 
     ## Initialize containers to hold the convergence plots and analysis results:
-    .initConvergencePlots(jaspResults, imputationDependencies)
+    .initConvergencePlots(jaspResults)
 
     if (options$tracePlot && is.null(jaspResults[["ConvergencePlots"]][["TracePlot"]])) {
       .createTracePlot(jaspResults[["ConvergencePlots"]], jaspResults[["MiceMids"]])
@@ -100,12 +65,12 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
       .saveImputedData(jaspResults, dataset, options)
 
     if (options$rHats)
-      .createRHatsTable(jaspResults, options, imputationDependencies)
+      .createRHatsTable(jaspResults, options)
     
-    if (options$runLinearRegression && .readyForLinReg(options, jaspResults[["MiceMids"]])) {
+    if (.readyForLinReg(options, jaspResults[["MiceMids"]])) {
       .checkRegressionValidVars(options, jaspResults)
       pooledLm <- makePooledLm(pool = TRUE, poolingParams = with(options, list(fStat = fStat, llEst = llEst)))
-      .initModelContainer(jaspResults, c(imputationDependencies, regressionDependencies))
+      .initModelContainer(jaspResults, options)
       .runRegression(jaspResults, options, ready = TRUE, lmFunction = pooledLm)
     }
   }
@@ -135,27 +100,24 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 ### ------------------------------------------------------------------------------------------------------------------###
 
-.initMiceMids <- function(jaspResults, imputationDependencies) {
-  if (!is.null(jaspResults[["MiceMids"]])) {
-    return()
-  }
+.initMiceMids <- function(jaspResults) {
+  if(!is.null(jaspResults[["MiceMids"]])) return()
 
   miceMids <- jaspBase::createJaspState()
-  miceMids$dependOn(imputationDependencies)
+  miceMids$dependOn(.imputationDependencies())
 
   jaspResults[["MiceMids"]] <- miceMids
 }
 
 ### ------------------------------------------------------------------------------------------------------------------###
 
-.initConvergencePlots <- function(jaspResults, imputationDependencies) {
-  if (!is.null(jaspResults[["ConvergencePlots"]])) {
-    return()
-  }
+
+.initConvergencePlots <- function(jaspResults) {
+  if(!is.null(jaspResults[["ConvergencePlots"]])) return()
 
   convergencePlots <- createJaspContainer(title = "Convergence Plots")
   convergencePlots$dependOn(
-    options = c(imputationDependencies, "tracePlot", "densityPlot")
+    options = c(.imputationDependencies(), "tracePlot", "densityPlot")
   )
 
   jaspResults[["ConvergencePlots"]] <- convergencePlots
@@ -163,13 +125,11 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 ### ------------------------------------------------------------------------------------------------------------------###
 
-.initModelContainer <- function(jaspResults, dependencies) {
-  if (!is.null(jaspResults[["ModelContainer"]])) {
-    return()
-  }
+.initModelContainer <- function(jaspResults, options) {
+  if(!is.null(jaspResults[["ModelContainer"]])) return()
 
   modelContainer <- createJaspContainer()
-  modelContainer$dependOn(options = dependencies)
+  modelContainer$dependOn(options = c(.imputationDependencies(), .analysisDependencies(options)))
 
   jaspResults[["ModelContainer"]] <- modelContainer
 }
@@ -284,7 +244,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     nullModelVars <- modelsMat[1, ]
 
     if (!is.null(fullModelVars) && any(fullModelVars %in% nullModelVars)) {
-      stop("You cannot specify imputation models starting from the full and the empty model simultaneously.")
+      stop("You cannot specify imputation models for a single variable in the full and the empty model simultaneously.")
     }
     if (any(!nullModelVars %in% encodedMethNames)) {
       stop(
@@ -388,7 +348,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 ### ------------------------------------------------------------------------------------------------------------------###
 
-.loggedEventsToTable <- function(jaspResults, options, imputationDependencies = imputationDependencies) {
+.loggedEventsToTable <- function(jaspResults, options) {
   miceMids <- jaspResults[["MiceMids"]]
   miceOut <- miceMids$object
   events <- miceOut$loggedEvents
@@ -398,8 +358,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   } else {
     if (is.null(jaspResults[["LoggedEventsTable"]])) {
       table <- createJaspTable("Logged events")
-      table$dependOn(options = c(imputationDependencies, "printAllLoggedEvents", "maxLoggedEvents"))
-
+      table$dependOn(options = c(.imputationDependencies(), "printAllLoggedEvents", "maxLoggedEvents"))
       table$addColumnInfo(name = "Iteration", title = "Iteration", type = "integer")
       table$addColumnInfo(name = "Imputation", title = "Imputation", type = "integer")
       table$addColumnInfo(name = "Variable", title = "Imputed variable", type = "string")
@@ -502,10 +461,10 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   return(imps)
 }
 
-.createRHatsTable <- function(jaspResults, options, imputationDependencies) {
+.createRHatsTable <- function(jaspResults, options) {
   if (is.null(jaspResults[["RHatsTable"]])) {
     rHats <- createJaspTable("RHat Convergence Diagnostics")
-    rHats$dependOn(options = c(imputationDependencies, "rHats"))
+    rHats$dependOn(options = c(.imputationDependencies(), "rHats"))
     rHats$addColumnInfo(name = "variable", title = "Variable", type = "string")
     rHats$addColumnInfo(name = "MissProp", title = "Missingness Proportion", type = "number")
     rHats$addColumnInfo(name = "Rhat.M.imp", title = "RHat of means", type = "number")

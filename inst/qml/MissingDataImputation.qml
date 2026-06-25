@@ -29,28 +29,15 @@ Form
 
 	Group
 	{
-
 		title:	qsTr("Analyses")
-
-		CheckBox
-		{
-			name:		"runLinearRegression"
-			label:		qsTr("Linear Regression")
-			id:			runLinearRegression
-			checked:	false
-		}
-
-		CheckBox
-		{
-			name:		"runLogisticRegression"
-			label:		qsTr("Logistic Regression")
-			id:			runLogisticRegression
-			checked:	false
-		}
-
+			CheckBox
+	{
+		name:		"linreg"
+		label:		qsTr("Linear Regression")
+		id:			linreg
+		checked:	false
 	}
-
-	//Regression.RegressionLinear { imputedVariables: imputation.impVars }
-	Regression.RegressionLinear {}
-
+		
+		Regression.RegressionLinear { visible: linreg.checked }
+	}
 }
