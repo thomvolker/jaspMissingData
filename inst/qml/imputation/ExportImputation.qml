@@ -1,4 +1,3 @@
-//
 // Copyright (C) 2013-2018 University of Amsterdam
 //
 // This program is free software: you can redistribute it and/or modify
@@ -15,21 +14,39 @@
 // License along with this program.  If not, see
 // <http://www.gnu.org/licenses/>.
 //
+
 import QtQuick
 import QtQuick.Layouts
-import JASP
 import JASP.Controls
-// import "./common"		as Common
 
 Group
 {
-	id:		regressionAnalysis
-	title:	qsTr("Regression Analysis")
+	property alias enabled:			exportSection.enabled
+	property alias showSave:		saveGroup.visible
 
-//	property var imputedVariables
-//	Variables { candidateVariables: imputedVariables }
-	Variables {}
-	Model {}
-	Statistics {}
-	Methods {}
+	id:								exportSection
+	title:							qsTr("Export Imputations")
+
+	Group
+	{
+		id:							saveGroup
+
+		CheckBox
+		{
+			name:					"saveImps"
+			text:					qsTr("Save imputed data")
+			info:					qsTr("When clicked, the model is exported to the specified file path.")
+
+			FileSelector
+			{
+				name:				"savePath"
+				label:				qsTr("Save as")
+				placeholderText:	qsTr("e.g., location/imputations.jaspImp")
+				filter:				"*.jaspImp"
+				save:				true
+				fieldWidth:			180 * preferencesModel.uiScale
+				info:				qsTr("The file path for the saved model.")
+			}
+		}
+	}
 }

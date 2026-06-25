@@ -25,11 +25,14 @@ import JASP.Controls
 Group
 {
 	property alias impVars:	variables.impVars
+	property bool hasFile: importSection.loadImpPath !== "" && importSection.loadImpPath !== null
 
-	Variables { id:	variables }
-	Parameterization {}
-	PredictorMatrix {}
-	ModelSpec {}
-	PassiveImputation {}
+	ImportImputation { id: importSection }
+	Variables { id:	variables; visible: !hasFile }
+	Parameterization { visible: !hasFile }
+	PredictorMatrix { visible: !hasFile }
+	ExportImputation { enabled: impVars.count > 0; visible: !hasFile }
+	ModelSpec { visible: !hasFile }
+	PassiveImputation { visible: !hasFile}
 	Diagnostics {}
 }

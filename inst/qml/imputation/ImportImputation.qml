@@ -1,4 +1,3 @@
-//
 // Copyright (C) 2013-2018 University of Amsterdam
 //
 // This program is free software: you can redistribute it and/or modify
@@ -15,21 +14,29 @@
 // License along with this program.  If not, see
 // <http://www.gnu.org/licenses/>.
 //
+
 import QtQuick
 import QtQuick.Layouts
-import JASP
 import JASP.Controls
-// import "./common"		as Common
 
 Group
 {
-	id:		regressionAnalysis
-	title:	qsTr("Regression Analysis")
+	property alias loadImpPath: imputationSelector.value
 
-//	property var imputedVariables
-//	Variables { candidateVariables: imputedVariables }
-	Variables {}
-	Model {}
-	Statistics {}
-	Methods {}
+	info: qsTr("You can load a previously imputed dataset to run the selected analysis on an already imputed version of the data.")
+
+	id:								importSection
+	title:							qsTr("Import Imputed Data")
+
+	FileSelector
+	{
+		id:                 imputationSelector
+		name:				"loadImpPath"
+		label:				qsTr("Imputed data")
+		placeholderText:	qsTr("e.g., location/imputations.jaspImp")
+		filter:				"*.jaspImp"
+		save:				false
+		fieldWidth:			180 * preferencesModel.uiScale
+	}
 }
+

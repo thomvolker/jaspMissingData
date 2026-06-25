@@ -25,7 +25,6 @@ import "./imputation"	as	Imputation
 // All Analysis forms must be built with the Form QML item
 Form
 {
-
 	Imputation.HeadlessImputation { id: imputation }
 
 	Group
@@ -39,6 +38,6 @@ Form
 		checked:	false
 	}
 		
-		Regression.RegressionLinear { imputedVariables: imputation.impVars; visible: linreg.checked }
+		Regression.RegressionLinear { visible: linreg.checked }
 	}
 }
