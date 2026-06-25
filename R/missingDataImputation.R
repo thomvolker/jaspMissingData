@@ -54,7 +54,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     if (options$rHats)
       .createRHatsTable(jaspResults, options)
     
-    if (options$analysis == "linreg" && .readyForLinReg(options, jaspResults[["MiceMids"]])) {
+    if (.readyForLinReg(options, jaspResults[["MiceMids"]])) {
       pooledLm <- makePooledLm(pool = TRUE, poolingParams = with(options, list(fStat = fStat, llEst = llEst)))
       .initModelContainer(jaspResults, options)
       .runRegression(jaspResults, options, ready = TRUE, lmFunction = pooledLm)
