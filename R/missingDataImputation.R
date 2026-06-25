@@ -115,7 +115,7 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   if(!is.null(jaspResults[["ModelContainer"]])) return()
 
   modelContainer <- createJaspContainer()
-  modelContainer$dependOn(options = c(.imputationDependencies(), .analysisDependencies(options$analysis)))
+  modelContainer$dependOn(options = c(.imputationDependencies(), .analysisDependencies(options)))
 
   jaspResults[["ModelContainer"]] <- modelContainer
 }

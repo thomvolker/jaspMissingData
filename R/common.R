@@ -77,10 +77,11 @@
   )
 }
 
-.analysisDependencies <- function(analysis) {
+.analysisDependencies <- function(options) {
   deps <- NULL
-  if (analysis == "linreg") {
+  if (options$linreg) {
     deps <- c(
+      deps,
       "dependent",
       "method",
       "covariates",
