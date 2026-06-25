@@ -111,7 +111,6 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
 ### ------------------------------------------------------------------------------------------------------------------###
 
-
 .initConvergencePlots <- function(jaspResults) {
   if(!is.null(jaspResults[["ConvergencePlots"]])) return()
 
